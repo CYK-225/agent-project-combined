@@ -1,0 +1,30 @@
+{
+  "name": "data-tool-manage-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:local": "vite --mode localdev",
+    "dev:remote": "vite --mode remote",
+    "build": "vite build",
+    "build:remote": "vite build --mode remote",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "@microsoft/fetch-event-source": "^2.0.1",
+    "@novnc/novnc": "^1.7.0",
+    "axios": "^1.6.5",
+    "element-plus": "^2.5.1",
+    "pinia": "^2.1.7",
+    "uuid": "^14.0.1",
+    "vue": "^3.4.15",
+    "vue-router": "^4.2.5",
+    "vuedraggable": "^4.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.3",
+    "vite": "^5.0.12"
+  }
+}
