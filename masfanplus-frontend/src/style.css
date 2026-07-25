@@ -1,0 +1,98 @@
+/* 全局重置和基础样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #FFFFFF;
+  color: #1F1F1F;
+}
+
+#app {
+  height: 100%;
+  width: 100%;
+}
+
+/* CSS Variables - Soft & Harmonious Theme */
+:root {
+  /* 背景色 */
+  --bg-sidebar: #F0F4F9;
+  --bg-main: #FFFFFF;
+  --bg-input: #F0F4F9;
+  --bg-message-user: #F0F4F9;
+  --bg-message-ai: transparent;
+  --bg-selected: #D3E3FD;
+  
+  /* 文字色 */
+  --text-primary: #1F1F1F;
+  --text-secondary: #444746;
+  
+  /* 强调色 */
+  --accent-color: #667eea;
+  --accent-primary: #0B57D0;
+  
+  /* 边框 */
+  --border-color: #E3E3E3;
+  
+  /* 阴影 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 滚动条样式 - 柔和现代 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* 选中文字样式 */
+::selection {
+  background: rgba(102, 126, 234, 0.2);
+  color: var(--text-primary);
+}
+
+/* 焦点样式 */
+:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* 平滑滚动 */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 防止文本溢出 */
+body {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
