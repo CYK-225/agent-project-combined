@@ -1,0 +1,14 @@
+# V3 GUI 工具 API 服务依赖
+# LLM 功能已迁移至外部 AgentScope 服务
+
+# Web框架
+flask>=2.3.0
+flask-cors>=4.0.0
+
+# HTTP客户端（异步回调用）
+requests>=2.31.0
+
+# GUI自动化
+pyautogui>=0.9.54
+pyperclip>=1.8.2
+Pillow>=10.0.0

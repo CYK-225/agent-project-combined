@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cyk.task.DAL.Mapper.AuthInfoMapper">
+    <resultMap id="BaseResultMap" type="com.cyk.task.DAL.DO.AuthInfoEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="cookie_value" jdbcType="VARCHAR" property="cookieValue"/>
+        <result column="website_name" jdbcType="VARCHAR" property="websiteName"/>
+        <result column="config_path" jdbcType="VARCHAR" property="configPath"/>
+        <result column="cloud_storage_name" jdbcType="VARCHAR" property="cloudStorageName"/>
+        <result column="used_count" jdbcType="INTEGER" property="usedCount"/>
+        <result column="is_available" jdbcType="BOOLEAN" property="isAvailable"/>
+        <result column="is_exclusive" jdbcType="BOOLEAN" property="isExclusive"/>
+        <result column="last_failure_time" jdbcType="TIMESTAMP" property="lastFailureTime"/>
+        <result column="last_heartbeat_time" jdbcType="TIMESTAMP" property="lastHeartbeatTime"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="password" jdbcType="VARCHAR" property="password"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`, `cookie_value`, `website_name`, `config_path`, `cloud_storage_name`, `used_count`, `is_available`,
+        `is_exclusive`, `last_failure_time`, `last_heartbeat_time`, `create_time`, `password`
+    </sql>
+
+</mapper>

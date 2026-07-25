@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cyk.Mapper.PromptsMapper">
+    <resultMap id="BaseResultMap" type="com.cyk.Enity.table.PromptsEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="user_id" jdbcType="BIGINT" property="userId"/>
+        <result column="category_id" jdbcType="BIGINT" property="categoryId"/>
+        <result column="title" jdbcType="VARCHAR" property="title"/>
+        <result column="content" jdbcType="CLOB" property="content"/>
+        <result column="status" jdbcType="SMALLINT" property="status"/>
+        <result column="is_public" jdbcType="SMALLINT" property="isPublic"/>
+        <result column="is_deleted" jdbcType="SMALLINT" property="isDeleted"/>
+        <result column="use_count" jdbcType="INTEGER" property="useCount"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+        <result column="prompt_id" jdbcType="BIGINT" property="promptId"/>
+        <result column="step" jdbcType="SMALLINT" property="step"/>
+        <result column="type" jdbcType="INTEGER" property="type"/>
+        <result column="prompt_title" jdbcType="VARCHAR" property="promptTitle"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`, `user_id`, `category_id`, `title`, `content`, `status`, `is_public`, `is_deleted`, `use_count`,
+        `create_time`, `update_time`, `prompt_id`, `step`, `type`, `prompt_title`
+    </sql>
+
+</mapper>

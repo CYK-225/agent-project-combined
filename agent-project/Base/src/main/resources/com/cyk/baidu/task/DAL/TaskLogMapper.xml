@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cyk.task.DAL.Mapper.TaskLogMapper">
+    <resultMap id="BaseResultMap" type="com.cyk.task.DAL.DO.TaskLogEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="task_id" jdbcType="BIGINT" property="taskId"/>
+        <result column="task_type" jdbcType="VARCHAR" property="taskType"/>
+        <result column="container_type" jdbcType="VARCHAR" property="containerType"/>
+        <result column="map_list" jdbcType="OTHER" property="mapList"
+                typeHandler="com.mybatisflex.core.handler.JacksonTypeHandler"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+
+    </resultMap>
+    <sql id="Base_Column_List">
+        `id`, `task_id`, `task_type`, `container_type`, `map_list`, `create_time`
+    </sql>
+
+</mapper>

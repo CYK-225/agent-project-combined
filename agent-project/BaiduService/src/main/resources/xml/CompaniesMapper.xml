@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cyk.Mapper.CompaniesMapper">
+    <resultMap id="BaseResultMap" type="com.cyk.Enity.table.CompaniesEntity">
+        <id column="uid" jdbcType="VARCHAR" property="uid"/>
+        <result column="building_uid" jdbcType="VARCHAR" property="buildingUid"/>
+        <result column="district" jdbcType="VARCHAR" property="district"/>
+        <result column="area_name" jdbcType="VARCHAR" property="areaName"/>
+        <result column="business_district" jdbcType="VARCHAR" property="businessDistrict"/>
+        <result column="park_type" jdbcType="VARCHAR" property="parkType"/>
+        <result column="building_name" jdbcType="VARCHAR" property="buildingName"/>
+        <result column="total_floors" jdbcType="VARCHAR" property="totalFloors"/>
+        <result column="sales_access" jdbcType="VARCHAR" property="salesAccess"/>
+        <result column="delivery_access" jdbcType="VARCHAR" property="deliveryAccess"/>
+        <result column="dining_convenience" jdbcType="VARCHAR" property="diningConvenience"/>
+        <result column="avg_delivery_price" jdbcType="INTEGER" property="avgDeliveryPrice"/>
+        <result column="occupancy_rate" jdbcType="VARCHAR" property="occupancyRate"/>
+        <result column="floor_info" jdbcType="VARCHAR" property="floorInfo"/>
+        <result column="company_name" jdbcType="VARCHAR" property="companyName"/>
+        <result column="office_area" jdbcType="VARCHAR" property="officeArea"/>
+        <result column="industry" jdbcType="VARCHAR" property="industry"/>
+        <result column="employee_count" jdbcType="VARCHAR" property="employeeCount"/>
+        <result column="gender_ratio" jdbcType="VARCHAR" property="genderRatio"/>
+        <result column="age_ratio" jdbcType="VARCHAR" property="ageRatio"/>
+        <result column="workplace_structure" jdbcType="VARCHAR" property="workplaceStructure"/>
+        <result column="dining_policy" jdbcType="VARCHAR" property="diningPolicy"/>
+        <result column="insured_count" jdbcType="VARCHAR" property="insuredCount"/>
+        <result column="established_years" jdbcType="VARCHAR" property="establishedYears"/>
+        <result column="registered_capital" jdbcType="VARCHAR" property="registeredCapital"/>
+        <result column="avg_salary" jdbcType="VARCHAR" property="avgSalary"/>
+        <result column="lunch_solution" jdbcType="VARCHAR" property="lunchSolution"/>
+        <result column="catering_history" jdbcType="VARCHAR" property="cateringHistory"/>
+        <result column="subsidy_status" jdbcType="VARCHAR" property="subsidyStatus"/>
+        <result column="subsidy_amount" jdbcType="NUMERIC" property="subsidyAmount"/>
+        <result column="key_contact" jdbcType="VARCHAR" property="keyContact"/>
+        <result column="peak_delivery_time" jdbcType="VARCHAR" property="peakDeliveryTime"/>
+        <result column="nearby_fast_food_count" jdbcType="VARCHAR" property="nearbyFastFoodCount"/>
+        <result column="min_fast_food_price" jdbcType="INTEGER" property="minFastFoodPrice"/>
+        <result column="max_fast_food_price" jdbcType="INTEGER" property="maxFastFoodPrice"/>
+        <result column="is_target_customer" jdbcType="VARCHAR" property="isTargetCustomer"/>
+        <result column="remarks" jdbcType="CLOB" property="remarks"/>
+        <result column="info_status" jdbcType="SMALLINT" property="infoStatus"/>
+        <result column="is_deleted" jdbcType="SMALLINT" property="isDeleted"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        `uid`, `building_uid`, `district`, `area_name`, `business_district`, `park_type`, `building_name`,
+        `total_floors`, `sales_access`, `delivery_access`, `dining_convenience`, `avg_delivery_price`, `occupancy_rate`,
+        `floor_info`, `company_name`, `office_area`, `industry`, `employee_count`, `gender_ratio`, `age_ratio`,
+        `workplace_structure`, `dining_policy`, `insured_count`, `established_years`, `registered_capital`,
+        `avg_salary`, `lunch_solution`, `catering_history`, `subsidy_status`, `subsidy_amount`, `key_contact`,
+        `peak_delivery_time`, `nearby_fast_food_count`, `min_fast_food_price`, `max_fast_food_price`,
+        `is_target_customer`, `remarks`, `info_status`, `is_deleted`, `create_time`, `update_time`
+    </sql>
+
+</mapper>

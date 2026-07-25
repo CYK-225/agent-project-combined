@@ -1,0 +1,7 @@
+# 发送 HTTP 回调给 Java 后端所需的库
+requests==2.31.0
+
+# 显式声明 playwright 版本（虽然基础镜像已包含，但写上有利于版本追踪）
+playwright==1.40.0
+
+ruamel.yaml==0.18.5

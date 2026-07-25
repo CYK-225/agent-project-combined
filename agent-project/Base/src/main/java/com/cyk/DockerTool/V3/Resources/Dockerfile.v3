@@ -1,0 +1,96 @@
+# V3 GUI代理 Dockerfile (基于国内镜像与 Chromium 优化，集成全套截图依赖)
+# 多阶段构建以优化镜像大小
+
+# 阶段1：带有GUI支持的轻量级基础镜像
+FROM python:3.10-slim AS base
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+        sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources; \
+    elif [ -f /etc/apt/sources.list ]; then \
+        sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list; \
+    fi
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xvfb \
+    x11vnc \
+    fluxbox \
+    x11-utils \
+    xauth \
+    gnome-screenshot \
+    scrot \
+    xclip \
+    xsel \
+    fonts-wqy-zenhei \
+    fonts-wqy-microhei \
+    fontconfig \
+    locales \
+    python3-tk \
+    python3-dev \
+    libpng-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    chromium \
+    chromium-driver \
+    imagemagick \
+    curl \
+    wget \
+    net-tools \
+    ca-certificates \
+    novnc \
+    websockify \
+    procps \
+    psmisc \
+    && ln -s /usr/bin/chromium /usr/bin/google-chrome \
+    && sed -i 's/^# *\(zh_CN.UTF-8\)/\1/' /etc/locale.gen \
+    && locale-gen \
+    && fc-cache -fv \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV LANG=zh_CN.UTF-8 \
+    LC_ALL=zh_CN.UTF-8 \
+    LANGUAGE=zh_CN.UTF-8
+
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+FROM base AS app
+
+WORKDIR /app
+
+COPY requirements.txt /app/requirements.txt
+
+RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+COPY utils.py /app/utils.py
+COPY agent_server.py /app/agent_server.py
+
+RUN mkdir -p /app/anno \
+    && mkdir -p /app/chrome_profile \
+    && mkdir -p /app/base_profile \
+    && mkdir -p /root/.fluxbox \
+    && touch /root/.Xauthority
+
+ENV DISPLAY=:99 \
+    DBUS_SESSION_BUS_ADDRESS=/dev/null \
+    LIBGL_ALWAYS_SOFTWARE=1 \
+    VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json \
+    ANGLE_DEFAULT_PLATFORM=swiftshader \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+EXPOSE ${AGENT_PORT:-9301} ${VNC_PORT:-9302}
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:${AGENT_PORT:-9301}/health || exit 1
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+CMD ["python", "-u", "agent_server.py"]

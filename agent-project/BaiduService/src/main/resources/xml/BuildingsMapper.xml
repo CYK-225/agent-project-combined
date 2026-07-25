@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cyk.Mapper.BuildingsMapper">
+    <resultMap id="BaseResultMap" type="com.cyk.Enity.table.BuildingsEntity">
+        <id column="uid" jdbcType="VARCHAR" property="uid"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="location" jdbcType="VARCHAR" property="location"/>
+        <result column="address" jdbcType="VARCHAR" property="address"/>
+        <result column="company_uid_list" jdbcType="VARCHAR" property="companyUidList"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        `uid`, `name`, `location`, `address`, `company_uid_list`, `create_time`, `update_time`
+    </sql>
+
+</mapper>

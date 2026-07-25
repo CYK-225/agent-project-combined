@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACL AI中台与工具平台通信架构图</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface2: #334155;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --accent: #8b5cf6;
+    --accent-light: #a78bfa;
+    --green: #10b981;
+    --green-bg: rgba(16,185,129,0.12);
+    --blue: #3b82f6;
+    --blue-bg: rgba(59,130,246,0.12);
+    --orange: #f59e0b;
+    --orange-bg: rgba(245,158,11,0.12);
+    --red: #ef4444;
+    --red-bg: rgba(239,68,68,0.12);
+    --cyan: #06b6d4;
+    --cyan-bg: rgba(6,182,212,0.12);
+    --pink: #ec4899;
+    --pink-bg: rgba(236,72,153,0.12);
+    --border: #475569;
+    --font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .header {
+    text-align: center;
+    padding: 32px 20px 12px;
+  }
+  .header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .header p {
+    font-size: 14px;
+    color: var(--text-muted);
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px 20px;
+    margin-bottom: 8px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+  }
+
+  .container {
+    padding: 0 24px 40px;
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+
+  svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 32px 0 16px;
+    padding-left: 12px;
+    border-left: 3px solid var(--accent);
+  }
+
+  .note {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 16px;
+    font-style: italic;
+  }
+
+  .tooltip-box {
+    position: fixed;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text);
+    max-width: 420px;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.15s;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  .tooltip-box.visible { opacity: 1; }
+  .tooltip-box .tt-title {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 6px;
+    color: var(--accent-light);
+  }
+  .tooltip-box code {
+    font-family: var(--font-mono);
+    background: rgba(139,92,246,0.15);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>ACL Layer — AI中台 & 工具平台 通信架构图</h1>
+  <p>展示工具平台(:8081)、AI中台(:8089)、Docker容器(:9301+)之间的完整通信链路、组件关系及参数</p>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>核心编排</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>HTTP API 入口</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>HTTP Client</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div>Docker 容器管理</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>实时推送 / 工作流</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--pink)"></div>外部服务</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>通信参数标签</div>
+</div>
+
+<div class="container">
+
+<!-- ========== 图1: 组件总览 ========== -->
+<div class="section-title">一、组件总览 & 通信链路</div>
+<svg viewBox="0 0 1440 920" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,1 L10,5 L0,9 Z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,1 L10,5 L0,9 Z" fill="#10b981"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,1 L10,5 L0,9 Z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,1 L10,5 L0,9 Z" fill="#f59e0b"/>
+    </marker>
+    <marker id="arrow-pink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,1 L10,5 L0,9 Z" fill="#ec4899"/>
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,1 L10,5 L0,9 Z" fill="#ef4444"/>
+    </marker>
+  </defs>
+
+  <!-- ===== 前端 ===== -->
+  <rect x="580" y="20" width="280" height="60" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+  <text x="720" y="45" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="600">Frontend (前端)</text>
+  <text x="720" y="63" text-anchor="middle" fill="#94a3b8" font-size="11">Web Browser — SSE 实时接收状态</text>
+
+  <!-- ===== 工具平台大框 ===== -->
+  <rect x="80" y="120" width="1280" height="520" rx="12" fill="rgba(59,130,246,0.04)" stroke="rgba(59,130,246,0.25)" stroke-width="1.5" stroke-dasharray="8 4"/>
+  <text x="100" y="148" fill="#3b82f6" font-size="14" font-weight="600">工具平台 (Tool Platform) :8081</text>
+  <text x="100" y="166" fill="#64748b" font-size="11">Spring Boot 3.2.4 — Java 21 — com.cyk</text>
+
+  <!-- AgentControllerV3 -->
+  <rect x="140" y="190" width="260" height="90" rx="6" fill="var(--blue-bg)" stroke="var(--blue)" stroke-width="1.5"/>
+  <text x="270" y="215" text-anchor="middle" fill="#3b82f6" font-size="13" font-weight="600">AgentControllerV3</text>
+  <text x="270" y="233" text-anchor="middle" fill="#94a3b8" font-size="10">任务提交 API 入口</text>
+  <text x="270" y="249" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">POST /api/v3/agent/task</text>
+  <text x="270" y="265" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">POST /api/v3/agent/task/step</text>
+
+  <!-- AgentCallbackController -->
+  <rect x="140" y="320" width="260" height="90" rx="6" fill="var(--blue-bg)" stroke="var(--blue)" stroke-width="1.5"/>
+  <text x="270" y="345" text-anchor="middle" fill="#3b82f6" font-size="13" font-weight="600">AgentCallbackController</text>
+  <text x="270" y="363" text-anchor="middle" fill="#94a3b8" font-size="10">接收 AI中台 回调</text>
+  <text x="270" y="379" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">POST /api/v3/agent/callback</text>
+  <text x="270" y="395" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">GET /api/v3/agent/status/{taskId}</text>
+
+  <!-- ContainerBridgeController -->
+  <rect x="140" y="450" width="260" height="90" rx="6" fill="var(--blue-bg)" stroke="var(--blue)" stroke-width="1.5"/>
+  <text x="270" y="475" text-anchor="middle" fill="#3b82f6" font-size="13" font-weight="600">ContainerBridgeController</text>
+  <text x="270" y="493" text-anchor="middle" fill="#94a3b8" font-size="10">接收 Docker 容器回调</text>
+  <text x="270" y="509" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">POST /api/v3/container</text>
+  <text x="270" y="525" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">  /callback/{containerId}</text>
+
+  <!-- AgentBridgeManager (核心) -->
+  <rect x="510" y="260" width="280" height="120" rx="8" fill="rgba(139,92,246,0.12)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="650" y="290" text-anchor="middle" fill="var(--accent-light)" font-size="14" font-weight="700">AgentBridgeManager</text>
+  <text x="650" y="310" text-anchor="middle" fill="#94a3b8" font-size="10.5">核心编排层 (桥接中心)</text>
+  <text x="650" y="330" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">invokeAgent() · handleAgentCallback()</text>
+  <text x="650" y="346" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">resumeAgent() · handleAgentSuspended()</text>
+  <text x="650" y="362" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">handleAgentCompleted/Failed()</text>
+
+  <!-- HutoolAgentPlatformClient -->
+  <rect x="900" y="190" width="260" height="100" rx="6" fill="var(--green-bg)" stroke="var(--green)" stroke-width="1.5"/>
+  <text x="1030" y="215" text-anchor="middle" fill="#10b981" font-size="13" font-weight="600">HutoolAgentPlatformClient</text>
+  <text x="1030" y="233" text-anchor="middle" fill="#94a3b8" font-size="10">HTTP 客户端 → AI中台</text>
+  <text x="1030" y="251" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">POST /api/agent/invoke</text>
+  <text x="1030" y="267" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">POST /api/agent/resume</text>
+  <text x="1030" y="283" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">GET /api/agent/status|results</text>
+
+  <!-- DockerPoolManagerV3 -->
+  <rect x="900" y="330" width="260" height="100" rx="6" fill="var(--cyan-bg)" stroke="var(--cyan)" stroke-width="1.5"/>
+  <text x="1030" y="355" text-anchor="middle" fill="#06b6d4" font-size="13" font-weight="600">DockerPoolManagerV3</text>
+  <text x="1030" y="373" text-anchor="middle" fill="#94a3b8" font-size="10">Docker 容器池管理</text>
+  <text x="1030" y="391" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">getOrCreatePod()</text>
+  <text x="1030" y="407" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">executeToolAction()</text>
+  <text x="1030" y="423" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">maxPool=10, ports 9301-9400</text>
+
+  <!-- V3EmitterManager -->
+  <rect x="510" y="430" width="180" height="70" rx="6" fill="var(--orange-bg)" stroke="var(--orange)" stroke-width="1.5"/>
+  <text x="600" y="455" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="600">V3EmitterManager</text>
+  <text x="600" y="473" text-anchor="middle" fill="#94a3b8" font-size="10">SSE 实时推送</text>
+  <text x="600" y="489" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">ConcurrentHashMap</text>
+
+  <!-- WorkflowEngine -->
+  <rect x="730" y="430" width="180" height="70" rx="6" fill="var(--orange-bg)" stroke="var(--orange)" stroke-width="1.5"/>
+  <text x="820" y="455" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="600">WorkflowEngine</text>
+  <text x="820" y="473" text-anchor="middle" fill="#94a3b8" font-size="10">工作流引擎</text>
+  <text x="820" y="489" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">advanceStep()</text>
+
+  <!-- CustomTaskScheduler -->
+  <rect x="510" y="530" width="180" height="60" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+  <text x="600" y="555" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="500">CustomTaskScheduler</text>
+  <text x="600" y="573" text-anchor="middle" fill="#94a3b8" font-size="10">任务调度系统</text>
+
+  <!-- taskContextMap -->
+  <rect x="730" y="530" width="180" height="60" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+  <text x="820" y="555" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="500">taskContextMap</text>
+  <text x="820" y="573" text-anchor="middle" fill="#94a3b8" font-size="10">ConcurrentHashMap&lt;String, DTO&gt;</text>
+
+  <!-- ===== AI中台 ===== -->
+  <rect x="1140" y="660" width="260" height="80" rx="8" fill="var(--pink-bg)" stroke="var(--pink)" stroke-width="1.5"/>
+  <text x="1270" y="688" text-anchor="middle" fill="#ec4899" font-size="14" font-weight="600">AI 中台 (Python)</text>
+  <text x="1270" y="706" text-anchor="middle" fill="#94a3b8" font-size="11">:8089 — Agent 推理引擎</text>
+  <text x="1270" y="724" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">LLM 推理 → 工具调用决策</text>
+
+  <!-- ===== Docker容器 ===== -->
+  <rect x="1140" y="790" width="260" height="80" rx="8" fill="var(--cyan-bg)" stroke="var(--cyan)" stroke-width="1.5"/>
+  <text x="1270" y="818" text-anchor="middle" fill="#06b6d4" font-size="14" font-weight="600">Docker Container</text>
+  <text x="1270" y="836" text-anchor="middle" fill="#94a3b8" font-size="11">gui-agent:v3 — :9301+</text>
+  <text x="1270" y="854" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">执行 GUI 操作 (点击/输入/截图)</text>
+
+  <!-- ===== 连接线 + 参数标签 ===== -->
+
+  <!-- 1. Frontend → AgentControllerV3 -->
+  <line x1="620" y1="80" x2="270" y2="190" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <rect x="350" y="110" width="180" height="44" rx="4" fill="var(--red-bg)" stroke="var(--red)" stroke-width="1" opacity="0.9"/>
+  <text x="440" y="126" text-anchor="middle" fill="#fca5a5" font-size="9" font-weight="500">POST /api/v3/agent/task</text>
+  <text x="440" y="140" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="var(--font-mono)">{username, instruction, workflowId}</text>
+
+  <!-- 2. AgentControllerV3 → AgentBridgeManager -->
+  <line x1="400" y1="240" x2="510" y2="290" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="455" y="255" text-anchor="middle" fill="#94a3b8" font-size="9">invokeAgent(dto)</text>
+
+  <!-- 3. AgentCallbackController → AgentBridgeManager -->
+  <line x1="400" y1="360" x2="510" y2="340" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="455" y="340" text-anchor="middle" fill="#94a3b8" font-size="9">handleCallback(dto)</text>
+
+  <!-- 4. ContainerBridgeController → AgentBridgeManager -->
+  <line x1="400" y1="490" x2="510" y2="380" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="430" y="442" text-anchor="middle" fill="#94a3b8" font-size="9">resumeAgent(dto)</text>
+
+  <!-- 5. AgentBridgeManager → HutoolAgentPlatformClient -->
+  <line x1="790" y1="300" x2="900" y2="260" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <text x="845" y="270" text-anchor="middle" fill="#10b981" font-size="9">HTTP 调用</text>
+
+  <!-- 6. AgentBridgeManager → DockerPoolManagerV3 -->
+  <line x1="790" y1="350" x2="900" y2="370" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="845" y="352" text-anchor="middle" fill="#06b6d4" font-size="9">executeTool()</text>
+
+  <!-- 7. AgentBridgeManager → V3EmitterManager -->
+  <line x1="600" y1="380" x2="600" y2="430" stroke="#f59e0b" stroke-width="1.2" marker-end="url(#arrow-orange)"/>
+  <text x="612" y="410" fill="#f59e0b" font-size="9">SSE push</text>
+
+  <!-- 8. AgentBridgeManager → WorkflowEngine -->
+  <line x1="740" y1="380" x2="790" y2="430" stroke="#f59e0b" stroke-width="1.2" marker-end="url(#arrow-orange)"/>
+  <text x="785" y="410" fill="#f59e0b" font-size="9">advanceStep()</text>
+
+  <!-- 9. HutoolAgentPlatformClient → AI中台 (invoke) -->
+  <path d="M 1160 230 Q 1220 230 1270 350 Q 1300 500 1270 660" fill="none" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <rect x="1185" y="540" width="200" height="70" rx="4" fill="var(--red-bg)" stroke="var(--red)" stroke-width="1" opacity="0.9"/>
+  <text x="1285" y="556" text-anchor="middle" fill="#fca5a5" font-size="9" font-weight="600">POST /api/agent/invoke</text>
+  <text x="1285" y="572" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="var(--font-mono)">{agentName: "hr-agent",</text>
+  <text x="1285" y="584" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="var(--font-mono)"> sessionId, taskId,</text>
+  <text x="1285" y="596" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="var(--font-mono)"> instruction, callbackUrl}</text>
+
+  <!-- 10. AI中台 → AgentCallbackController (SUSPENDED callback) -->
+  <path d="M 1180 690 Q 700 690 270 500 Q 200 470 200 410" fill="none" stroke="#ec4899" stroke-width="2" marker-end="url(#arrow-pink)"/>
+  <rect x="540" y="610" width="240" height="70" rx="4" fill="var(--red-bg)" stroke="var(--red)" stroke-width="1" opacity="0.9"/>
+  <text x="660" y="626" text-anchor="middle" fill="#fca5a5" font-size="9" font-weight="600">POST /api/v3/agent/callback</text>
+  <text x="660" y="642" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="var(--font-mono)">{taskId, status: "SUSPENDED",</text>
+  <text x="660" y="654" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="var(--font-mono)"> step, toolName, toolInput,</text>
+  <text x="660" y="666" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="var(--font-mono)"> modelOutput}</text>
+
+  <!-- 11. DockerPoolManagerV3 → Docker Container -->
+  <path d="M 1160 390 Q 1240 500 1270 790" fill="none" stroke="#06b6d4" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="1200" y="680" width="190" height="56" rx="4" fill="var(--red-bg)" stroke="var(--red)" stroke-width="1" opacity="0.9" transform="translate(-80, 0)"/>
+  <text x="1230" y="696" text-anchor="middle" fill="#fca5a5" font-size="9" font-weight="600">POST /execute_tool</text>
+  <text x="1230" y="712" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="var(--font-mono)">{task_id, tool_name,</text>
+  <text x="1230" y="724" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="var(--font-mono)"> tool_input, callback_url}</text>
+
+  <!-- 12. Docker Container → ContainerBridgeController -->
+  <path d="M 1140 840 Q 600 870 270 540" fill="none" stroke="#06b6d4" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="530" y="740" width="260" height="70" rx="4" fill="var(--red-bg)" stroke="var(--red)" stroke-width="1" opacity="0.9"/>
+  <text x="660" y="756" text-anchor="middle" fill="#fca5a5" font-size="9" font-weight="600">POST /api/v3/container/callback/{containerId}</text>
+  <text x="660" y="772" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="var(--font-mono)">{taskId, success: true/false,</text>
+  <text x="660" y="784" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="var(--font-mono)"> result, screenshotPath, step}</text>
+
+  <!-- 13. HutoolAgentPlatformClient → AI中台 (resume) -->
+  <path d="M 1100 290 Q 1100 500 1100 660" fill="none" stroke="#10b981" stroke-width="1.8" stroke-dasharray="6 3" marker-end="url(#arrow-green)"/>
+  <rect x="1000" y="440" width="200" height="70" rx="4" fill="var(--red-bg)" stroke="var(--red)" stroke-width="1" opacity="0.9"/>
+  <text x="1100" y="456" text-anchor="middle" fill="#fca5a5" font-size="9" font-weight="600">POST /api/agent/resume</text>
+  <text x="1100" y="472" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="var(--font-mono)">{taskId, executionResult,</text>
+  <text x="1100" y="484" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="var(--font-mono)"> success, result,</text>
+  <text x="1100" y="496" text-anchor="middle" fill="#94a3b8" font-size="8.5" font-family="var(--font-mono)"> screenshotPath, step}</text>
+
+  <!-- 14. V3EmitterManager → Frontend (SSE) -->
+  <line x1="600" y1="430" x2="660" y2="80" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow-orange)"/>
+  <text x="610" y="130" fill="#f59e0b" font-size="9" transform="rotate(-70 610 130)">SSE events</text>
+
+  <!-- 15. AgentBridgeManager → CustomTaskScheduler -->
+  <line x1="600" y1="380" x2="600" y2="530" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+  <text x="612" y="520" fill="#94a3b8" font-size="8.5">onTaskCompleted()</text>
+
+  <!-- 16. AgentBridgeManager → taskContextMap -->
+  <line x1="740" y1="380" x2="770" y2="530" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+  <text x="770" y="510" fill="#94a3b8" font-size="8.5">context save</text>
+
+  <!-- 状态标签 -->
+  <rect x="140" y="600" width="360" height="24" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+  <text x="320" y="616" text-anchor="middle" fill="#94a3b8" font-size="10">Task Status: PENDING → RUNNING → SUSPENDED → COMPLETED / FAILED</text>
+
+</svg>
+
+<p class="note">虚线框 = 工具平台边界 | 红色标签 = 通信参数 | 箭头 = 数据流方向</p>
+
+<!-- ========== 图2: Suspend-Resume 循环时序 ========== -->
+<div class="section-title">二、Suspend-Resume 循环时序图</div>
+<svg viewBox="0 0 1440 780" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- 生命线 -->
+  <rect x="100" y="20" width="160" height="40" rx="6" fill="var(--blue-bg)" stroke="var(--blue)" stroke-width="1.5"/>
+  <text x="180" y="45" text-anchor="middle" fill="#3b82f6" font-size="12" font-weight="600">前端 Frontend</text>
+  <line x1="180" y1="60" x2="180" y2="760" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4 3"/>
+
+  <rect x="420" y="20" width="200" height="40" rx="6" fill="rgba(139,92,246,0.12)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="520" y="45" text-anchor="middle" fill="var(--accent-light)" font-size="12" font-weight="600">工具平台 :8081</text>
+  <line x1="520" y1="60" x2="520" y2="760" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4 3"/>
+
+  <rect x="820" y="20" width="200" height="40" rx="6" fill="var(--pink-bg)" stroke="var(--pink)" stroke-width="1.5"/>
+  <text x="920" y="45" text-anchor="middle" fill="#ec4899" font-size="12" font-weight="600">AI中台 :8089</text>
+  <line x1="920" y1="60" x2="920" y2="760" stroke="#ec4899" stroke-width="1" stroke-dasharray="4 3"/>
+
+  <rect x="1220" y="20" width="200" height="40" rx="6" fill="var(--cyan-bg)" stroke="var(--cyan)" stroke-width="1.5"/>
+  <text x="1320" y="45" text-anchor="middle" fill="#06b6d4" font-size="12" font-weight="600">Docker容器 :9301+</text>
+  <line x1="1320" y1="60" x2="1320" y2="760" stroke="#06b6d4" stroke-width="1" stroke-dasharray="4 3"/>
+
+  <!-- Step 1: 提交任务 -->
+  <line x1="180" y1="85" x2="515" y2="85" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <rect x="240" y="70" width="220" height="16" rx="3" fill="rgba(59,130,246,0.1)"/>
+  <text x="350" y="82" text-anchor="middle" fill="#60a5fa" font-size="9" font-weight="500">1. POST /api/v3/agent/task {instruction}</text>
+  <text x="350" y="100" text-anchor="middle" fill="#64748b" font-size="8.5" font-family="var(--font-mono)">{username, instruction, workflowId, profileName}</text>
+
+  <!-- Step 2: invokeAgent -->
+  <line x1="525" y1="130" x2="915" y2="130" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <rect x="590" y="115" width="260" height="16" rx="3" fill="rgba(16,185,129,0.1)"/>
+  <text x="720" y="127" text-anchor="middle" fill="#34d399" font-size="9" font-weight="500">2. POST /api/agent/invoke</text>
+  <text x="720" y="145" text-anchor="middle" fill="#64748b" font-size="8.5" font-family="var(--font-mono)">{agentName:"hr-agent", sessionId, taskId, instruction, callbackUrl}</text>
+
+  <!-- Step 3: AI中台 SUSPENDED callback -->
+  <line x1="915" y1="195" x2="525" y2="195" stroke="#ec4899" stroke-width="1.5" marker-end="url(#arrow-pink)"/>
+  <rect x="590" y="175" width="260" height="16" rx="3" fill="rgba(236,72,153,0.1)"/>
+  <text x="720" y="187" text-anchor="middle" fill="#f472b6" font-size="9" font-weight="500">3. POST callback {SUSPENDED}</text>
+  <text x="720" y="210" text-anchor="middle" fill="#64748b" font-size="8.5" font-family="var(--font-mono)">{taskId, status:"SUSPENDED", step, toolName:"gui_left_click", toolInput:"{...}"}</text>
+
+  <!-- Step 3a: SSE push -->
+  <line x1="515" y1="195" x2="185" y2="195" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arrow-orange)"/>
+  <text x="350" y="190" text-anchor="middle" fill="#f59e0b" font-size="8">SSE: SUSPENDED</text>
+
+  <!-- Step 4: executeTool -->
+  <line x1="525" y1="250" x2="1315" y2="250" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="750" y="235" width="300" height="16" rx="3" fill="rgba(6,182,212,0.1)"/>
+  <text x="920" y="247" text-anchor="middle" fill="#22d3ee" font-size="9" font-weight="500">4. POST /execute_tool</text>
+  <text x="920" y="265" text-anchor="middle" fill="#64748b" font-size="8.5" font-family="var(--font-mono)">{task_id, tool_name:"gui_left_click", tool_input:"{x:100,y:200}", callback_url}</text>
+
+  <!-- Step 5: Container callback -->
+  <line x1="1315" y1="310" x2="525" y2="310" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="750" y="295" width="300" height="16" rx="3" fill="rgba(6,182,212,0.1)"/>
+  <text x="920" y="307" text-anchor="middle" fill="#22d3ee" font-size="9" font-weight="500">5. POST /api/v3/container/callback/{id}</text>
+  <text x="920" y="325" text-anchor="middle" fill="#64748b" font-size="8.5" font-family="var(--font-mono)">{taskId, success:true, result:"clicked at (100,200)", screenshotPath, step}</text>
+
+  <!-- Step 5a: SSE push -->
+  <line x1="515" y1="310" x2="185" y2="310" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arrow-orange)"/>
+  <text x="350" y="305" text-anchor="middle" fill="#f59e0b" font-size="8">SSE: RESUMED</text>
+
+  <!-- Step 6: resumeAgent -->
+  <line x1="525" y1="365" x2="915" y2="365" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <rect x="590" y="350" width="260" height="16" rx="3" fill="rgba(16,185,129,0.1)"/>
+  <text x="720" y="362" text-anchor="middle" fill="#34d399" font-size="9" font-weight="500">6. POST /api/agent/resume</text>
+  <text x="720" y="380" text-anchor="middle" fill="#64748b" font-size="8.5" font-family="var(--font-mono)">{taskId, executionResult, success, result, screenshotPath, step}</text>
+
+  <!-- Loop indicator -->
+  <rect x="935" y="390" width="180" height="60" rx="6" fill="var(--orange-bg)" stroke="var(--orange)" stroke-width="1.2"/>
+  <text x="1025" y="412" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="600">循环?</text>
+  <text x="1025" y="428" text-anchor="middle" fill="#94a3b8" font-size="9">AI中台继续推理</text>
+  <text x="1025" y="442" text-anchor="middle" fill="#94a3b8" font-size="9">→ SUSPENDED (回到步骤3)</text>
+
+  <!-- Loop arrow back to step 3 -->
+  <path d="M 1100 420 Q 1170 420 1170 260 Q 1170 195 930 195" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 3" marker-end="url(#arrow-orange)"/>
+  <text x="1185" y="310" fill="#f59e0b" font-size="9" font-weight="500" transform="rotate(-90 1185 310)">需要更多GUI操作时循环</text>
+
+  <!-- Step 7: COMPLETED -->
+  <line x1="915" y1="490" x2="525" y2="490" stroke="#ec4899" stroke-width="1.5" marker-end="url(#arrow-pink)"/>
+  <rect x="590" y="475" width="260" height="16" rx="3" fill="rgba(236,72,153,0.1)"/>
+  <text x="720" y="487" text-anchor="middle" fill="#f472b6" font-size="9" font-weight="500">7. POST callback {COMPLETED}</text>
+  <text x="720" y="505" text-anchor="middle" fill="#64748b" font-size="8.5" font-family="var(--font-mono)">{taskId, status:"COMPLETED", modelOutput, outputResult}</text>
+
+  <!-- Step 7a: SSE push -->
+  <line x1="515" y1="490" x2="185" y2="490" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arrow-orange)"/>
+  <text x="350" y="485" text-anchor="middle" fill="#f59e0b" font-size="8">SSE: STEP_COMPLETED</text>
+
+  <!-- Step 8: get results -->
+  <line x1="525" y1="545" x2="915" y2="545" stroke="#10b981" stroke-width="1.2" stroke-dasharray="4 2" marker-end="url(#arrow-green)"/>
+  <rect x="620" y="530" width="210" height="16" rx="3" fill="rgba(16,185,129,0.1)"/>
+  <text x="720" y="542" text-anchor="middle" fill="#34d399" font-size="9">8. GET /api/agent/results/{taskId}</text>
+
+  <!-- Step 8 response -->
+  <line x1="915" y1="570" x2="525" y2="570" stroke="#10b981" stroke-width="1.2" stroke-dasharray="4 2" marker-end="url(#arrow-green)"/>
+  <text x="720" y="565" text-anchor="middle" fill="#64748b" font-size="8.5">← 累积结果 (JSONObject)</text>
+
+  <!-- Step 9: Workflow check -->
+  <rect x="525" y="590" width="220" height="50" rx="6" fill="var(--orange-bg)" stroke="var(--orange)" stroke-width="1.2"/>
+  <text x="635" y="610" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="600">9. 工作流检查</text>
+  <text x="635" y="626" text-anchor="middle" fill="#94a3b8" font-size="9">有下一步? → 重新 invokeAgent</text>
+  <text x="635" y="638" text-anchor="middle" fill="#94a3b8" font-size="9">无? → finishWorkflowTask()</text>
+
+  <!-- Step 10: final SSE -->
+  <line x1="515" y1="660" x2="185" y2="660" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow-orange)"/>
+  <rect x="240" y="648" width="240" height="16" rx="3" fill="rgba(245,158,11,0.1)"/>
+  <text x="360" y="660" text-anchor="middle" fill="#f59e0b" font-size="9" font-weight="600">10. SSE: WORKFLOW_COMPLETED / FAILED</text>
+
+  <!-- Step 11: task system -->
+  <rect x="525" y="690" width="220" height="40" rx="6" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+  <text x="635" y="712" text-anchor="middle" fill="#e2e8f0" font-size="10">11. customTaskScheduler</text>
+  <text x="635" y="726" text-anchor="middle" fill="#94a3b8" font-size="9">.onTaskCompleted()</text>
+
+  <!-- Or: FAILED path -->
+  <rect x="935" y="470" width="180" height="40" rx="6" fill="var(--red-bg)" stroke="var(--red)" stroke-width="1.2"/>
+  <text x="1025" y="492" text-anchor="middle" fill="#fca5a5" font-size="10" font-weight="500">或: FAILED</text>
+  <text x="1025" y="505" text-anchor="middle" fill="#94a3b8" font-size="9">{errorMessage}</text>
+</svg>
+
+<p class="note">步骤3-6构成 Suspend-Resume 循环，AI中台需要多次GUI操作时会重复此循环</p>
+
+<!-- ========== 图3: AgentTaskNotifyDTO 字段映射 ========== -->
+<div class="section-title">三、AgentTaskNotifyDTO 统一通信载体 — 字段按场景映射</div>
+<svg viewBox="0 0 1440 560" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- DTO 标题 -->
+  <rect x="520" y="10" width="400" height="40" rx="8" fill="rgba(139,92,246,0.15)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="720" y="35" text-anchor="middle" fill="var(--accent-light)" font-size="14" font-weight="700">AgentTaskNotifyDTO (统一DTO)</text>
+
+  <!-- Invoke 场景 -->
+  <rect x="40" y="80" width="380" height="220" rx="6" fill="var(--green-bg)" stroke="var(--green)" stroke-width="1.2"/>
+  <text x="230" y="102" text-anchor="middle" fill="#10b981" font-size="12" font-weight="600">Invoke 场景 (→ AI中台)</text>
+  <text x="230" y="120" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">POST /api/agent/invoke</text>
+
+  <text x="60" y="148" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">agentName</text>
+  <text x="200" y="148" fill="#64748b" font-size="9.5">= "hr-agent"</text>
+  <text x="60" y="168" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">sessionId</text>
+  <text x="200" y="168" fill="#64748b" font-size="9.5">= taskId (会话隔离)</text>
+  <text x="60" y="188" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">taskId</text>
+  <text x="200" y="188" fill="#64748b" font-size="9.5">= 唯一任务ID</text>
+  <text x="60" y="208" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">containerUrl</text>
+  <text x="200" y="208" fill="#64748b" font-size="9.5">= 容器访问地址</text>
+  <text x="60" y="228" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">instruction</text>
+  <text x="200" y="228" fill="#64748b" font-size="9.5">= 用户指令文本</text>
+  <text x="60" y="248" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">callbackUrl</text>
+  <text x="200" y="248" fill="#64748b" font-size="9.5">= 回调URL</text>
+  <text x="60" y="268" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">promptsId</text>
+  <text x="200" y="268" fill="#64748b" font-size="9.5">= 提示词ID (可选)</text>
+  <text x="60" y="288" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">sysPrompt</text>
+  <text x="200" y="288" fill="#64748b" font-size="9.5">= 系统提示词 (可选)</text>
+
+  <!-- Callback(SUSPENDED) 场景 -->
+  <rect x="460" y="80" width="380" height="220" rx="6" fill="var(--pink-bg)" stroke="var(--pink)" stroke-width="1.2"/>
+  <text x="650" y="102" text-anchor="middle" fill="#ec4899" font-size="12" font-weight="600">Callback 场景 (← AI中台)</text>
+  <text x="650" y="120" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">POST /api/v3/agent/callback</text>
+
+  <text x="480" y="148" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">taskId</text>
+  <text x="620" y="148" fill="#64748b" font-size="9.5">= 任务ID</text>
+  <text x="480" y="168" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">status</text>
+  <text x="620" y="168" fill="#fca5a5" font-size="9.5">= "SUSPENDED"</text>
+  <text x="480" y="188" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">step</text>
+  <text x="620" y="188" fill="#64748b" font-size="9.5">= 当前步骤号</text>
+  <text x="480" y="208" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">toolName</text>
+  <text x="620" y="208" fill="#64748b" font-size="9.5">= "gui_left_click" 等</text>
+  <text x="480" y="228" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">toolInput</text>
+  <text x="620" y="228" fill="#64748b" font-size="9.5">= JSON 参数</text>
+  <text x="480" y="248" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">modelOutput</text>
+  <text x="620" y="248" fill="#64748b" font-size="9.5">= Agent输出文本</text>
+  <text x="480" y="268" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">errorMessage</text>
+  <text x="620" y="268" fill="#64748b" font-size="9.5">= 错误信息 (FAILED时)</text>
+  <text x="480" y="288" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">timestamp</text>
+  <text x="620" y="288" fill="#64748b" font-size="9.5">= 时间戳(ms)</text>
+
+  <!-- Callback(COMPLETED/FAILED) 补充 -->
+  <rect x="460" y="310" width="380" height="80" rx="6" fill="rgba(139,92,246,0.06)" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4 2"/>
+  <text x="650" y="332" text-anchor="middle" fill="var(--accent-light)" font-size="10.5" font-weight="500">COMPLETED/FAILED 补充字段</text>
+  <text x="480" y="352" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">status</text>
+  <text x="620" y="352" fill="#fca5a5" font-size="9.5">= "COMPLETED" | "FAILED"</text>
+  <text x="480" y="372" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">outputResult</text>
+  <text x="620" y="372" fill="#64748b" font-size="9.5">= 结构化JSON输出</text>
+
+  <!-- Resume 场景 -->
+  <rect x="880" y="80" width="380" height="220" rx="6" fill="var(--cyan-bg)" stroke="var(--cyan)" stroke-width="1.2"/>
+  <text x="1070" y="102" text-anchor="middle" fill="#06b6d4" font-size="12" font-weight="600">Resume 场景 (→ AI中台)</text>
+  <text x="1070" y="120" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">POST /api/agent/resume</text>
+
+  <text x="900" y="148" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">taskId</text>
+  <text x="1040" y="148" fill="#64748b" font-size="9.5">= 任务ID</text>
+  <text x="900" y="168" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">executionResult</text>
+  <text x="1040" y="168" fill="#64748b" font-size="9.5">= 执行结果摘要</text>
+  <text x="900" y="188" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">success</text>
+  <text x="1040" y="188" fill="#64748b" font-size="9.5">= true / false</text>
+  <text x="900" y="208" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">result</text>
+  <text x="1040" y="208" fill="#64748b" font-size="9.5">= 操作结果描述</text>
+  <text x="900" y="228" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">screenshotPath</text>
+  <text x="1040" y="228" fill="#64748b" font-size="9.5">= 截图文件路径</text>
+  <text x="900" y="248" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">screenshot</text>
+  <text x="1040" y="248" fill="#64748b" font-size="9.5">= Base64截图 (可选)</text>
+  <text x="900" y="268" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">step</text>
+  <text x="1040" y="268" fill="#64748b" font-size="9.5">= 当前步骤号</text>
+  <text x="900" y="288" fill="#e2e8f0" font-size="10.5" font-family="var(--font-mono)">timestamp</text>
+  <text x="1040" y="288" fill="#64748b" font-size="9.5">= 时间戳(ms)</text>
+
+  <!-- Container回调参数 -->
+  <rect x="880" y="310" width="380" height="80" rx="6" fill="rgba(6,182,212,0.06)" stroke="var(--cyan)" stroke-width="1" stroke-dasharray="4 2"/>
+  <text x="1070" y="332" text-anchor="middle" fill="#22d3ee" font-size="10.5" font-weight="500">Container 回调参数 (→ 工具平台)</text>
+  <text x="1070" y="352" text-anchor="middle" fill="#94a3b8" font-size="9.5" font-family="var(--font-mono)">POST /api/v3/container/callback/{containerId}</text>
+  <text x="1070" y="372" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">{taskId, success, result, screenshotPath, step, screenshot}</text>
+
+  <!-- Execute Tool 参数 -->
+  <rect x="40" y="310" width="380" height="80" rx="6" fill="rgba(6,182,212,0.06)" stroke="var(--cyan)" stroke-width="1" stroke-dasharray="4 2"/>
+  <text x="230" y="332" text-anchor="middle" fill="#22d3ee" font-size="10.5" font-weight="500">Execute Tool 参数 (→ 容器)</text>
+  <text x="230" y="352" text-anchor="middle" fill="#94a3b8" font-size="9.5" font-family="var(--font-mono)">POST http://{containerIp}:{port}/execute_tool</text>
+  <text x="230" y="372" text-anchor="middle" fill="#64748b" font-size="9.5" font-family="var(--font-mono)">{task_id, tool_name, tool_input, callback_url}</text>
+
+  <!-- 配置区域 -->
+  <rect x="40" y="420" width="1360" height="120" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="1.2"/>
+  <text x="60" y="445" fill="var(--accent-light)" font-size="13" font-weight="600">配置参数 (application.yml)</text>
+
+  <text x="60" y="472" fill="#10b981" font-size="11" font-weight="500">agent.bridge:</text>
+  <text x="80" y="490" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">agent-platform-url: http://localhost:8089</text>
+  <text x="80" y="506" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">self-base-url: http://localhost:8081</text>
+  <text x="80" y="522" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">callback-path: /api/v3/agent/callback</text>
+  <text x="80" y="535" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">timeout: 30000 (ms)</text>
+
+  <text x="440" y="472" fill="#06b6d4" font-size="11" font-weight="500">agent.v3.pool:</text>
+  <text x="460" y="490" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">max-pool-size: 10</text>
+  <text x="460" y="506" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">port-range: 9301-9400</text>
+  <text x="460" y="522" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">image: gui-agent:v3</text>
+  <text x="460" y="535" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">memory: 1GB, shm: 512MB</text>
+
+  <text x="780" y="472" fill="#f59e0b" font-size="11" font-weight="500">agent.workflow:</text>
+  <text x="800" y="490" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">config-dir: classpath:workflows/</text>
+  <text x="800" y="506" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">default: hr-agent-workflow</text>
+
+  <text x="1120" y="472" fill="#ef4444" font-size="11" font-weight="500">docker.host:</text>
+  <text x="1140" y="490" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">ssh://zjhtest@8.129.128.167:22</text>
+  <text x="1140" y="506" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">callback-base-url:</text>
+  <text x="1140" y="522" fill="#94a3b8" font-size="10" font-family="var(--font-mono)">  http://8.129.128.167:8081</text>
+</svg>
+
+</div>
+
+<div class="tooltip-box" id="tooltip"></div>
+
+</body>
+</html>

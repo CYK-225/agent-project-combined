@@ -1,0 +1,24 @@
+# Weixin 模块 Python 依赖
+# 与 V2 版本兼容，针对微信 Linux 客户端优化
+
+# Web 框架
+flask>=2.3.0
+flask-cors>=4.0.0
+
+# GUI 自动化
+pyautogui>=0.9.54
+pyperclip>=1.8.2
+Pillow>=10.0.0
+
+# 图像处理
+numpy>=1.24.0
+opencv-python-headless>=4.8.0
+
+# LLM API
+openai>=1.0.0
+
+# HTTP 请求
+requests>=2.31.0
+
+# 工具库
+python-dotenv>=1.0.0

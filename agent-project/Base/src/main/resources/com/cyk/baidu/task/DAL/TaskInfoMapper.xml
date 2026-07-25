@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cyk.task.DAL.Mapper.TaskInfoMapper">
+    <resultMap id="BaseResultMap" type="com.cyk.task.DAL.DO.TaskInfoEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="company_id" jdbcType="VARCHAR" property="companyId"/>
+        <result column="company_name" jdbcType="VARCHAR" property="companyName"/>
+        <result column="config_name" jdbcType="VARCHAR" property="configName"/>
+        <result column="task_type" jdbcType="VARCHAR" property="taskType"/>
+        <result column="status" jdbcType="VARCHAR" property="status"/>
+        <result column="collected_fields" jdbcType="OTHER" property="collectedFields"
+                typeHandler="com.mybatisflex.core.handler.JacksonTypeHandler"
+        /> <result column="is_exclusive" jdbcType="BOOLEAN" property="isExclusive"/>
+        <result column="create_time_ms" jdbcType="BIGINT" property="createTimeMs"/>
+        <result column="start_time" jdbcType="TIMESTAMP" property="startTime"/>
+        <result column="retry_count" jdbcType="INTEGER" property="retryCount"/>
+        <result column="failure_reason" jdbcType="VARCHAR" property="failureReason"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="mission" jdbcType="VARCHAR" property="mission"/>
+        <result column="web_address" jdbcType="VARCHAR" property="webAddress"/>
+        <result column="last_failure_time" jdbcType="TIMESTAMP" property="lastFailureTime"/>
+        <result column="user_id" jdbcType="VARCHAR" property="userId"/>
+        <result column="prompt_id" jdbcType="BIGINT" property="promptId"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        `id`, `company_id`, `company_name`, `config_name`, `task_type`, `status`, `collected_fields`, `create_time_ms`,
+        `start_time`, `retry_count`, `failure_reason`, `remark`, `last_failure_time`, `is_exclusive`, `mission`,
+        `web_address`, `user_id`, `prompt_id`
+    </sql>
+
+</mapper>

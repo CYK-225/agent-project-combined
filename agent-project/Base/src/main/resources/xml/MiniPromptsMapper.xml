@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cyk.Mapper.MiniPromptsMapper">
+    <resultMap id="BaseResultMap" type="com.cyk.Enity.table.MiniPromptsEntity">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="title" jdbcType="VARCHAR" property="title"/>
+        <result column="content" jdbcType="LONGNVARCHAR" property="content"/>
+        <result column="type" jdbcType="VARCHAR" property="type"/>
+        <result column="user_id" jdbcType="OTHER" property="userId"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+        <result column="is_deleted" jdbcType="SMALLINT" property="isDeleted"/>
+        <result column="is_public" jdbcType="SMALLINT" property="isPublic"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        `id`, `title`, `content`, `type`, `user_id`, `create_time`, `update_time`, `is_deleted`, `is_public`
+    </sql>
+
+</mapper>

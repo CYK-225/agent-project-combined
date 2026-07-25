@@ -1,0 +1,303 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: baidu-service
+  web:
+    resources:
+      static-locations: classpath:/dist/
+
+
+  datasource:
+    # 直接把 url, username 等写在 datasource 下面
+    url: jdbc:postgresql://8.129.128.167:5432/postgres?currentSchema=information_tool_database&stringtype=unspecified
+    username: postgres
+    password: postgresTest@123
+    driver-class-name: org.postgresql.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      minimumIdle: 1
+      maximumPoolSize: 30
+      idleTimeout: 30000
+      maxLifetime: 60000
+baidu:
+  map:
+    ak: EMAJHisHdHWGnrfbcjkWbmzqEJq7twd0
+
+logging:
+  level:
+    root: INFO
+    com.cyk.gaode: INFO
+
+enscan:
+  path: /usr/local/server/ai/AutoGUI/ENS/Resources
+  api:
+    url: http://127.0.0.1:31000
+
+
+docker:
+  # 你的远程服务器 Docker TCP 地址
+  #  host: tcp://172.17.80.1 :2376
+  host: ssh://zjhtest@8.129.128.167:22
+  password: zWF7fV7W
+#  # 你的远程服务器 IP (用于发送 HTTP 请求到 Python 容器)
+#  server-ip: 47.119.39.86
+
+#spring-boot:
+#  # Python 容器向 Java 发送回调时的基础地址
+#  # 【注意】：如果是内网穿透，请填写穿透后的域名，如 http://abc.ngrok.io
+#  callback-base-url: http://47.119.39.86:8089/api/docker/callback
+
+# ENS Agent Configuration
+agent:
+
+
+  ens:
+    # ==================== ENS 路径配置 ====================
+    # ENS Agent 基础路径（云服务器上的实际路径）
+    base-dir: /usr/local/server/ai/AutoGUI/ENS
+    # ENScan 可执行文件路径
+    enscan-path: /usr/local/server/ai/AutoGUI/ENS/enscan
+    # 输出目录名称（相对于基础目录）
+    output-dir-name: OutPut
+    # 默认回调 URL
+    default-callback-url: http://8.129.128.167:8081/api/docker/ens/callback
+    # Docker 镜像名称
+    image-name: gui-agent:ENS
+    # 内存限制（字节）
+    memory-limit: 536870912   # 512MB
+    memory-swap: 1073741824   # 1GB
+    shm-size: 268435456       # 256MB
+    # ENScan API 端口
+    api-port: 8100
+
+  # V1 Agent Configuration
+  v1:
+    # ==================== V1 路径配置 ====================
+    # V1 Agent 基础路径（云服务器上的实际路径）
+    base-dir: /usr/local/server/ai/AutoGUI/V1
+    # 用户配置文件基础路径
+    profile-base-path: /usr/local/server/ai/AutoGUI/V1/Resources/profiles
+    # 工具脚本路径
+    utils-script-path: /usr/local/server/ai/AutoGUI/V1/Resources/utils.py
+    # Python 运行脚本路径
+    runner-script-path: /usr/local/server/ai/AutoGUI/V1/Resources/run_gui_owl_1_5_for_pc.py
+    # 输出目录名称（相对于用户配置目录）
+    output-dir-name: OutPut
+    # 默认回调 URL
+    default-callback-url: http://8.129.128.167:8081/api/docker/callback
+    # Docker 镜像名称
+    image-name: gui-agent:V1
+    # 内存限制（字节）
+    memory-limit: 1073741824  # 1GB
+    memory-swap: 2147483648   # 2GB
+    shm-size: 536870912       # 512MB
+    max-steps: 50 #最大步数
+    # ==================== LLM API 配置（新增）====================
+    api-key: sk-e26ef7931f2a480b9d7ec6a2fb56527a
+    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    model: qwen3.5-plus
+    default-profile-name: default_profile
+
+  # V2 Agent Pool Configuration
+  pool:
+    # Nginx base URL for serving container screenshots and resources
+    # Container screenshots will be accessible at: {nginx-base-url}/screenshots/{containerId}/{filename}
+    java-base-url: http://8.129.128.167
+    # Maximum number of containers in the pool
+    max-pool-size: 10
+    # Port range for container agent servers
+    port-range-start: 9101
+    port-range-end: 9200
+    # Container idle timeout in seconds (5 minutes)
+    idle-timeout-seconds: 300
+    # Docker image for V2 agents
+    image-name: gui-agent:v2
+    # Memory limits for containers
+    memory-limit: 1073741824  # 1GB
+    memory-swap: 2147483648   # 2GB
+    shm-size: 536870912       # 512MB
+    # Callback base URL for container-to-host communication
+    # Uses host.docker.internal for containers to reach the host
+    callback-base-url: http://8.129.128.167:8081
+    # ==================== V2 路径配置 ====================
+    # 【重要】用户数据基础路径（云服务器上的实际路径）
+    # 所有用户的浏览器配置和输出文件都将保存在此目录下
+    profile-base-path: /usr/local/server/ai/AutoGUI/V2/profiles
+
+    # 输出目录名称（相对于用户目录）
+    # 完整路径：{profile-base-path}/{username}/{output-dir-name}
+    output-dir-name: OutPut
+
+    # ==================================================
+    # 目录结构说明
+    # ==================================================
+    # 配置完成后，系统会自动创建以下目录结构：
+    #
+    # {profile-base-path}/                           # 基础目录（自动创建）
+    # ├── user1/                                 # 用户1的目录
+    # │   ├── OutPut/                          # 输出目录（截图、日志）
+    # │   │   ├── task_xxx_screenshot.png
+    # │   │   └── ...
+    # │   ├── Default/                        # Chrome浏览器数据
+    # │   ├── Cookies                          # Cookie文件
+    # │   └── ...
+    # ├── user2/                                 # 用户2的目录
+    # │   ├── OutPut/
+    # │   └── ...
+    # └── ...
+    #
+    # 权限说明：
+    # - Java应用需要对 {profile-base-path} 有读写权限
+    # - 建议执行：chmod -R 777 {profile-base-path}
+    # ==================================================
+    chrome-data-dir-name: chrome_data
+    # ==================== api 配置 ====================
+    default-api-key: sk-e26ef7931f2a480b9d7ec6a2fb56527a
+    default-base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    default-max-steps: 40
+    default-model: qwen3.5-plus
+
+  # AI 中台配置
+  bridge:
+    # AI 中台地址
+    agent-platform-url: http://localhost:8089
+    # 本服务地址（用于回调）
+    self-base-url: http://localhost:8081
+#    self-base-url: http://8.129.128.167:8081
+    # 回调路径
+    callback-path: /api/v3/agent/callback
+    # HTTP 超时时间（毫秒）
+    timeout: 30000
+
+  # V3 Agent Pool Configuration
+  v3:
+    pool:
+      # Java后端基础URL（用于健康检查）
+      java-base-url: http://8.129.128.167
+      # Maximum number of containers in the pool
+      max-pool-size: 10
+      # Port range for container agent servers (与V2的9101-9200错开)
+      port-range-start: 9301
+      port-range-end: 9400
+      # Container idle timeout in seconds (5 minutes)
+      idle-timeout-seconds: 300
+      # Docker image for V3 agents
+      image-name: gui-agent:v3
+      # Memory limits for containers
+      memory-limit: 1073741824  # 1GB
+      memory-swap: 2147483648   # 2GB
+      shm-size: 536870912       # 512MB
+      # Callback base URL for container-to-host communication
+      callback-base-url: http://8.129.128.167
+      # ==================== V3 路径配置 ====================
+      profile-base-path: /usr/local/server/ai/AutoGUI/V3/profiles
+      output-dir-name: OutPut
+      chrome-data-dir-name: chrome_data
+      # ==================== api 配置 ====================
+      default-api-key: sk-e26ef7931f2a480b9d7ec6a2fb56527a
+      default-base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      default-max-steps: 40
+      default-model: qwen3.5-plus
+
+  # WeChat Agent Pool Configuration
+  wechat:
+    pool:
+      # ==================== 池配置 ====================
+      # 最大容器数量
+      max-pool-size: 10
+      # 端口范围（与V2端口范围9000-9100错开，避免冲突）
+      port-range-start: 9201
+      port-range-end: 9300
+      # 容器空闲超时时间（秒），微信登录状态保持时间更长
+      idle-timeout-seconds: 600
+      # Docker镜像名称
+      image-name: weixin-agent:v2
+
+      # ==================== 资源限制 ====================
+      # 容器内存限制（2GB，微信客户端需要更多内存）
+      memory-limit: 2147483648
+      # 容器内存交换限制（4GB）
+      memory-swap: 4294967296
+      # 容器共享内存大小（1GB）
+      shm-size: 1073741824
+
+      # ==================== 网络配置 ====================
+      # 容器访问主机的回调基础URL
+      callback-base-url: http://host.docker.internal:8089
+      # Java后端基础URL（用于健康检查）
+      java-base-url: http://8.129.128.167
+
+      # ==================== 路径配置 ====================
+      # 微信数据基础路径（云服务器上的实际路径）
+      profile-base-path: /root/AutoGUI/Weixin/profiles
+      # 输出目录名称（相对于用户目录）
+      output-dir-name: OutPut
+      # 微信登录状态目录名称（挂载到容器 /root/.xwechat）
+      wechat-data-dir-name: xwechat_data
+      # 微信文件目录名称（挂载到容器 /root/xwechat_files）
+      wechat-files-dir-name: xwechat_files
+
+      # ==================== LLM默认配置 ====================
+      default-api-key: sk-e26ef7931f2a480b9d7ec6a2fb56527a
+      default-base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      # 微信使用视觉模型（qwen-vl-max）
+      default-model: qwen3.5-plus
+      # 微信操作可能需要更多步骤
+      default-max-steps: 50
+
+      # ==================================================
+      # 目录结构说明
+      # ==================================================
+      # 配置完成后，系统会自动创建以下目录结构：
+      #
+      # {profile-base-path}/                           # 基础目录
+      # ├── user1/                                 # 用户1的目录
+      # │   ├── OutPut/                          # 输出目录（截图、日志）
+      # │   ├── xwechat_data/                    # 微信登录状态数据
+      # │   │   └── ...                          # 挂载到容器 /root/.xwechat
+      # │   └── xwechat_files/                   # 微信聊天文件
+      # │       └── ...                          # 挂载到容器 /root/xwechat_files
+      # ├── user2/
+      # │   └── ...
+      # └── ...
+      #
+      # 关键特性：
+      # 1. 确定性MAC地址生成：基于用户名MD5哈希，防止微信风控
+      # 2. 登录状态持久化：通过 xwechat_data 目录保存
+      # 3. 用户-容器绑定：每个用户绑定唯一容器
+      # ==================================================
+
+  cookie:
+    # ==================== Cookie 路径配置 ====================
+    # 【重要】对应 CookieProperties 中的 cookiePoolPath
+    # 宿主机Cookie池物理路径，所有的 Cookie 状态 JSON 都存在这里
+    cookie-pool-path: /usr/local/server/ai/AutoGUI/ENS/Profiles
+
+    # 默认回调 URL（用于 Python 获取到 Cookie 后通知 Java）
+    default-callback-url: http://8.129.128.167:8081/api/cookie/callback
+
+    # Docker 镜像名称 (阶段二的采摘者)
+    image-name: gui-agent:cookie-get
+
+    # ==================== 资源限制 ====================
+    # 内存限制（提升至 1GB，保障无头浏览器稳定运行）
+    memory-limit: 1073741824  # 1GB
+    memory-swap: 2147483648   # 2GB
+    # 【极其重要】Playwright/Chromium 渲染页面极度依赖 shm，建议给到 512MB 防止闪退
+    shm-size: 536870912       # 512MB
+
+    # ==================== V1 镜像 AI 破防配置 ====================
+    # 用于阶段一：突破爱企查等强检测站点的 AI 视觉模拟容器
+    v1-image-name: autogui:v1
+
+    # 视觉大模型的 API Key (建议使用你之前验证过的通义千问 Key)
+    ai-api-key: sk-e26ef7931f2a480b9d7ec6a2fb56527a
+
+    # 大模型请求网关
+    ai-base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+
+    # 使用的具体模型名称
+    ai-model: qwen3.5-plus
+

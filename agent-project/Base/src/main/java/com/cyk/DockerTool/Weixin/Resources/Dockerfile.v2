@@ -1,0 +1,159 @@
+# Weixin 模块 Dockerfile
+# 基于 Ubuntu 22.04，运行原生 Linux 微信客户端
+# 用于 WSL Ubuntu 22.04 环境，与现有 Chrome 实现完全隔离
+
+# 阶段1：基础镜像
+FROM ubuntu:22.04 AS base
+
+# 防止软件包安装时的交互式提示
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 配置阿里云镜像源（国内加速）
+RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    sed -i 's/security.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list
+
+# 安装中文字体、本地化工具和基础依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # 中文字体和本地化
+    fonts-wqy-zenhei \
+    fonts-wqy-microhei \
+    fontconfig \
+    locales \
+    # X11 和显示服务
+    xvfb \
+    x11vnc \
+    fluxbox \
+    x11-utils \
+    xauth \
+    # 截图工具
+    scrot \
+    gnome-screenshot \
+    # 剪贴板支持
+    xclip \
+    xsel \
+    # 网络和证书工具
+    curl \
+    wget \
+    ca-certificates \
+    novnc \
+    websockify \
+    # 进程管理
+    procps \
+    psmisc \
+    # 微信 Linux 客户端核心依赖
+    libgtk-3-0 \
+    libnotify4 \
+    libnss3 \
+    libxss1 \
+    libxtst6 \
+    xdg-utils \
+    libatspi2.0-0 \
+    libuuid1 \
+    libappindicator3-1 \
+    libsecret-1-0 \
+    libasound2 \
+    libgbm1 \
+    # 配置中文 Locale
+    && sed -i 's/^# *\(zh_CN.UTF-8\)/\1/' /etc/locale.gen \
+    && locale-gen \
+    && fc-cache -fv \
+    # 清理
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# 设置中文环境变量
+ENV LANG=zh_CN.UTF-8 \
+    LC_ALL=zh_CN.UTF-8 \
+    LANGUAGE=zh_CN.UTF-8
+
+# 阶段2：安装微信客户端
+FROM base AS weixin
+
+# 设置工作目录
+WORKDIR /app
+
+# 将下载好的 deb 包直接 COPY 进镜像
+COPY wechat.deb /tmp/wechat.deb
+
+# 【核心修改】：使用 apt-get 直接安装本地 deb 包！
+# 这样它会自动去源里拉取微信所需的依赖，如果依赖找不到，会直接红字报错停下，绝不会偷偷卸载。
+RUN apt-get update && \
+    apt-get install -y /tmp/wechat.deb && \
+    rm -f /tmp/wechat.deb
+
+# 确保 wechat 命令存在于 PATH 中
+# 微信 4.x 版本通常会自动安装到 /opt/wechat 并且在 /usr/bin/wechat 生成软链接
+# 如果没有，我们手动补齐
+RUN if ! command -v wechat &> /dev/null; then \
+        ln -sf /opt/wechat/wechat /usr/bin/wechat || \
+        ln -sf /opt/WeChat/wechat /usr/bin/wechat || \
+        echo "Warning: wechat binary not found"; \
+    fi
+
+# 安装 Python 环境（用于 agent_server）
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.10 \
+    python3-pip \
+    python3.10-venv \
+    python3-tk \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# 创建虚拟环境
+RUN python3 -m venv --system-site-packages /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# 升级 pip 并使用清华源
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel -i https://pypi.tuna.tsinghua.edu.cn/simple
+# 阶段3：应用镜像
+FROM weixin AS app
+
+# 设置工作目录
+WORKDIR /app
+
+# 复制 Python 依赖文件
+COPY requirements.txt /app/requirements.txt
+
+# 安装 Python 依赖
+RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 复制应用代码
+COPY utils.py /app/utils.py
+COPY agent_server.py /app/agent_server.py
+
+# 创建必要的目录
+RUN mkdir -p /app/anno \
+    && mkdir -p /root/.xwechat \
+    && mkdir -p /root/xwechat_files \
+    && mkdir -p /root/.fluxbox \
+    && touch /root/.Xauthority \
+    && chmod -R 777 /root/.xwechat \
+    && chmod -R 777 /root/xwechat_files
+
+# 设置环境变量
+ENV DISPLAY=:99 \
+    DBUS_SESSION_BUS_ADDRESS=/dev/null \
+    LIBGL_ALWAYS_SOFTWARE=1 \
+    VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json \
+    ANGLE_DEFAULT_PLATFORM=swiftshader \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# 复制入口点脚本
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# 暴露固定内部端口
+# 注意：外部映射端口由 Java 通过 docker run -p 参数决定
+# 例如：docker run -p 9101:9001 -p 9102:9002 ...
+EXPOSE 9001 9002
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:9001/health || exit 1
+
+# 入口点
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# 默认命令 (确保使用 python3)
+CMD ["python3", "-u", "agent_server.py"]
