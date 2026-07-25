@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.repository.dal.mapper.AgentExecutionDetailMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.repository.dal.entity.AgentExecutionDetailEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="task_id" jdbcType="VARCHAR" property="taskId"/>
+        <result column="session_id" jdbcType="VARCHAR" property="sessionId"/>
+        <result column="step" jdbcType="INTEGER" property="step"/>
+        <result column="tool_step" jdbcType="INTEGER" property="toolStep"/>
+        <result column="model_output" jdbcType="CLOB" property="modelOutput"/>
+        <result column="tool_name" jdbcType="VARCHAR" property="toolName"/>
+        <result column="tool_input" jdbcType="CLOB" property="toolInput"/>
+        <result column="screenshot_path" jdbcType="VARCHAR" property="screenshotPath"/>
+        <result column="output_result" jdbcType="OTHER" property="outputResult"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, task_id, session_id, step, tool_step, model_output, tool_name, 
+        tool_input, screenshot_path, output_result, created_at
+    </sql>
+
+</mapper>

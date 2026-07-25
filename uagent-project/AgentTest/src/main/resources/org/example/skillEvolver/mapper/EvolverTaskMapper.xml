@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.skillEvolver.mapper.EvolverTaskMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.skillEvolver.entity.EvolverTaskEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="task_id" jdbcType="VARCHAR" property="taskId"/>
+        <result column="task_name" jdbcType="VARCHAR" property="taskName"/>
+        <result column="instruction" jdbcType="VARCHAR" property="instruction"/>
+        <result column="task_data" jdbcType="OTHER" property="taskData" typeHandler="com.mybatisflex.core.handler.Fastjson2TypeHandler"/>
+        <result column="verifier" jdbcType="OTHER" property="verifier" typeHandler="com.mybatisflex.core.handler.Fastjson2TypeHandler"/>
+        <result column="reward_mode" jdbcType="VARCHAR" property="rewardMode"/>
+        <result column="max_iterations" jdbcType="INTEGER" property="maxIterations"/>
+        <result column="n_exploration" jdbcType="INTEGER" property="nExploration"/>
+        <result column="n_validation" jdbcType="INTEGER" property="nValidation"/>
+        <result column="current_iteration" jdbcType="INTEGER" property="currentIteration"/>
+        <result column="status" jdbcType="VARCHAR" property="status"/>
+        <result column="best_skill_version" jdbcType="VARCHAR" property="bestSkillVersion"/>
+        <result column="best_skill_content" jdbcType="VARCHAR" property="bestSkillContent"/>
+        <result column="best_reward" jdbcType="DOUBLE" property="bestReward"/>
+        <result column="validation_pass_rate" jdbcType="DOUBLE" property="validationPassRate"/>
+        <result column="token_estimate" jdbcType="BIGINT" property="tokenEstimate"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+        <result column="updated_at" jdbcType="TIMESTAMP" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`, `task_id`, `task_name`, `instruction`, `task_data`, `verifier`,
+        `reward_mode`, `max_iterations`, `n_exploration`, `n_validation`,
+        `current_iteration`, `status`, `best_skill_version`, `best_skill_content`,
+        `best_reward`, `validation_pass_rate`, `token_estimate`,
+        `created_at`, `updated_at`
+    </sql>
+
+</mapper>

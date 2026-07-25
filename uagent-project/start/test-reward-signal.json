@@ -1,0 +1,7 @@
+{
+  "taskName": "reward-signal-test",
+  "instruction": "编写一个简单的 Python 模块 calc.py，实现 add(a, b) 和 multiply(a, b) 两个函数，并编写 test_calc.py 包含至少 3 个 pytest 测试用例。",
+  "verifier": "{\"exitCodeMustBe\":0,\"fileExists\":[\"calc.py\",\"test_calc.py\"],\"stdoutContains\":[\"passed\"]}",
+  "maxIterations": 2,
+  "nExploration": 4
+}

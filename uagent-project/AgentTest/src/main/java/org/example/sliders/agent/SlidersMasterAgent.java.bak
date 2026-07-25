@@ -1,0 +1,103 @@
+package org.example.sliders.agent;
+
+import io.agentscope.core.hook.Hook;
+import io.agentscope.core.model.Model;
+import io.agentscope.core.skill.SkillBox;
+import lombok.extern.log4j.Log4j2;
+import org.example.agentScope.framework.annotation.AgentDefinition;
+import org.example.agentScope.framework.core.AbstractAgentTemplate;
+import org.example.agentScope.framework.core.AgentComponentFacade;
+import org.example.agentScope.mas.mailbox.hook.MailHook;
+import org.example.agentScope.mas.mailbox.skill.MailSkillFactory;
+import org.example.sliders.entity.SlidersDocumentEntity;
+import org.example.sliders.mapper.SlidersDocumentMapper;
+import org.example.sliders.service.SlidersTaskService;
+import org.example.sliders.skill.SlidersSkillFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * SLIDERS 流水线协调者
+ */
+@Log4j2
+@AgentDefinition(
+        name = "SlidersMaster",
+        enableMail = true,
+        enableMemory = true,
+        enablePersistence = true,
+        maxIters = 50,
+        description = "SLIDERS 流水线协调者 — 接收用户请求，分派任务，汇总结果"
+)
+public class SlidersMasterAgent extends AbstractAgentTemplate {
+
+    @Autowired
+    private SlidersTaskService taskService;
+
+    @Autowired
+    private SlidersDocumentMapper documentMapper;
+
+    public SlidersMasterAgent(AgentComponentFacade components) {
+        super(components);
+    }
+
+    @Override
+    protected String setupSysPrompt() {
+        return """
+                你是 SLIDERS 多智能体流水线的协调者（Master）。
+                
+                ## 你的职责
+                1. 当用户提交「问题 + 文档」时，调用 create_task 工具创建流水线任务
+                2. 通过 send_mail 将任务 ID 发送给 SlidersChunker Agent
+                3. 等待 SlidersAnswer Agent 通过邮件返回最终答案
+                4. 将答案回复给用户
+                
+                ## 流水线阶段
+                CHUNKING → SCHEMA → EXTRACTION → RECONCILIATION → ANSWER
+                
+                ## 注意事项
+                - 你不直接处理文档，只做任务路由和状态管理
+                - 收到 Answer Agent 的最终答案后，立即回复用户
+                - 如果收到错误邮件，将错误信息告知用户
+                """;
+    }
+
+    @Override
+    protected Model setupCustomModel() {
+        return components.model().dashScope().buildDashScopeModel();
+    }
+
+    @Override
+    protected SkillBox setupSkills() {
+        return components.skillBox().create(getToolkit())
+                .addSkillWithTools(
+                        MailSkillFactory.createSkill(),
+                        MailSkillFactory.createTools(
+                                getMailboxState(), getMailboxCenter(),
+                                getAgentPoolManager(), getThreadID()
+                        )
+                )
+                .addSkillWithTools(
+                        SlidersSkillFactory.createMasterSkill(),
+                        SlidersSkillFactory.createMasterTools(
+                                (taskId, name, description, content) -> documentMapper.insert(
+                                        SlidersDocumentEntity.builder()
+                                                .taskId(taskId).documentName(name)
+                                                .description(description).content(content).build()
+                                ),
+                                taskService
+                        )
+                )
+                .buildSkillBox();
+    }
+
+    @Override
+    protected List<Hook> setupCustomHooks() {
+        List<Hook> hooks = new ArrayList<>(super.setupCustomHooks());
+        if (getMailboxState() != null) {
+            hooks.add(MailSkillFactory.createHook(getMailboxState(), getMailboxCenter(), getThreadID()));
+        }
+        return hooks;
+    }
+}

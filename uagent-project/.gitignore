@@ -1,0 +1,14 @@
+/.proxyai/*
+/.idea/*
+/.mvn/*
+target/*
+target/classes/*
+*.class
+/docs/*
+.claude*
+*.log
+*/target
+
+/start/evolved-skills/*
+/AgentTest/AgentTest.iml
+/AGENTS.md

@@ -1,0 +1,231 @@
+management:
+  tracing:
+    sampling:
+      probability: 1.0 # 生产环境建议调低，如 0.1
+  observations:
+    annotations:
+      enabled: true
+
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.neo4j.Neo4jAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.neo4j.Neo4jRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.neo4j.Neo4jDataAutoConfiguration
+  web:
+    resources:
+      static-locations: classpath:/dist/
+  neo4j:
+    enabled: false
+    uri: bolt://127.0.0.1:7687
+    authentication:
+      username: ${NEO4J_USERNAME:neo4j}
+      password: ${NEO4J_PASSWORD}
+    pool:
+      metrics-enabled: true
+      log-slow-queries: true
+      max-connection-pool-size: 50
+      connection-acquisition-timeout: 30s
+  ai:
+    vectorstore:
+      milvus:
+        enabled: false
+        client:
+          host: 127.0.0.1
+          port: 19530
+        embedding-dimension: 1536
+        initialize-schema: true
+    skill:
+      fileDir: /usr/local/server/ai/uAi/skill
+
+  threads:
+    virtual:
+      enabled: true
+  application:
+    name: MASFanAgent
+  datasource:
+    dynamic:
+      primary: postgresql-business
+      datasource:
+        postgresql-business:
+          url: jdbc:postgresql://127.0.0.1:5432/postgres?currentSchema=business
+          username: ${DB_USERNAME:postgres}
+          password: ${DB_PASSWORD}
+          driver-class-name: org.postgresql.Driver
+          type: com.zaxxer.hikari.HikariDataSource
+          hikari:
+            minimumIdle: 1
+            maximumPoolSize: 30
+            idleTimeout: 30000
+            maxLifetime: 60000
+        postgresql-session:
+          url: jdbc:postgresql://127.0.0.1:5432/postgres?currentSchema=session
+          username: ${DB_USERNAME:postgres}
+          password: ${DB_PASSWORD}
+          driver-class-name: org.postgresql.Driver
+          type: com.zaxxer.hikari.HikariDataSource
+          hikari:
+            minimumIdle: 1
+            maximumPoolSize: 30
+            idleTimeout: 30000
+            maxLifetime: 60000
+        postgresql-prediction:
+          url: jdbc:postgresql://127.0.0.1:5432/postgres?currentSchema=prediction
+          username: ${DB_USERNAME:postgres}
+          password: ${DB_PASSWORD}
+          driver-class-name: org.postgresql.Driver
+          type: com.zaxxer.hikari.HikariDataSource
+          hikari:
+            minimumIdle: 1
+            maximumPoolSize: 30
+            idleTimeout: 30000
+            maxLifetime: 60000
+server:
+  port: 8089
+logging:
+  level:
+    org.example.agent: INFO  # 线上建议改为 INFO
+    org.springframework.web.client: INFO
+    io.agentscope.core: INFO
+
+jetcache:
+  statIntervalMinutes: 15
+  areaInCacheName: false
+  local:
+    default:
+      type: caffeine
+      keyConvertor: jackson
+  remote:
+    default:
+      type: redis.lettuce
+      keyConvertor: jackson
+      broadcastChannel: ${spring.application.name}
+      valueEncoder: java
+      valueDecoder: java
+      uri:
+        # 注意：如果 Redis 密码包含特殊字符（如 @），在环境变量中传入时需要 UrlEncode（例如 %40）
+        - redis://${REDIS_PASSWORD}@127.0.0.1:6379
+
+bocha:
+  api-key: ${BOCHA_API_KEY}
+  base-url: https://api.bochaai.com/v1/web-search
+
+qwen:
+  apiKey: ${QWEN_API_KEY}
+
+ollama:
+  base-url: http://127.0.0.1:11434
+  modelName: fervent_mcclintock
+
+reme:
+  base-url: http://127.0.0.1:8002/
+
+AutoContextConfig:
+  msgThreshold: 100
+  maxToken: 131072
+  tokenRatio: 0.75
+  lastKeep: 50
+  largePayloadThreshold: 131072
+  offloadSinglePreview: 200
+  minConsecutiveToolMessages: 6
+  currentRoundCompressionRatio: 0.3
+
+mybatis-flex:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 生产环境视情况可关闭 SQL 打印
+
+agentscope:
+  toolkit:
+    parallel: false
+    allow-tool-deletion: false
+    enableMetaTool: true
+    timeout-seconds: 300
+  agui:
+    path-prefix: /agui
+    cors-enabled: true
+    server-side-memory: true
+    max-thread-sessions: 1000
+    session-timeout-minutes: 30
+    enable-reasoning: true
+  studio:
+    enabled: true
+    url: http://127.0.0.1:3000
+
+plan:
+  notebook:
+    default-max-subtasks: 20
+    default-need-confirm: true
+
+docker:
+  host: ssh://${DOCKER_SSH_USER}@127.0.0.1:22
+
+finance-agent:
+  debug-enabled: false
+
+openai:
+  adapter:
+    enabled: true
+    group: openai
+    api-keys:
+      - ${OPENAI_ADAPTER_KEY_1}
+      - ${OPENAI_ADAPTER_KEY_2}
+    sse-timeout: 1800000
+
+mcp:
+  annotation:
+    enabled: true
+    default-group: default
+    auto-register: true
+    default-timeout: 30000
+    async-thread-pool-size: 4
+
+graph:
+  workflow:
+    engine:
+      default-checkpoint-strategy: memory
+      parallel-executor-enabled: true
+      default-recursion-limit: 25
+
+takeout:
+  appId: ${TAKEOUT_APP_ID}
+  appSecret: ${TAKEOUT_APP_SECRET}
+  baseUrl: http://api.youfantech.cn
+
+
+# =============================================================================
+# Skill 配置（用于自动生成 .env 和 config.yaml）
+# =============================================================================
+skill:
+  config:
+    # ---------------------------------------------------------------------------
+    # 数据查询统计数据库配置（原有配置）
+    # ---------------------------------------------------------------------------
+    database:
+      host: ${DB_HOST:rr-wz96iz1x9ed83elo2ho.mysql.rds.aliyuncs.com}
+      port: ${DB_PORT:3306}
+      name: ${DB_NAME:menu_recommand}
+      user: ${DB_USER:zjh_read}
+      password: ${DB_PASSWORD:9^4e70NT2cpqeIrNPAjo}
+
+    # ---------------------------------------------------------------------------
+    # DataPlatform 数据库配置（etl_order_data_daily 所在库）
+    # ---------------------------------------------------------------------------
+    dataplatform:
+      host: ${DP_HOST:rr-wz96iz1x9ed83elo2ho.mysql.rds.aliyuncs.com}
+      port: ${DP_PORT:3306}
+      name: ${DP_NAME:dp}
+      user: ${DP_USER:zjh_read}
+      password: ${DP_PASSWORD:9^4e70NT2cpqeIrNPAjo}
+
+    # ---------------------------------------------------------------------------
+    # 对话存储数据库配置（新增，独立数据库）
+    # ---------------------------------------------------------------------------
+    conversation-db:
+      host: ${CONVERSATION_DB_HOST:rr-wz96iz1x9ed83elo2ho.mysql.rds.aliyuncs.com}
+      port: ${CONVERSATION_DB_PORT:3306}
+      name: ${CONVERSATION_DB_NAME:conversation_db}
+      user: ${CONVERSATION_DB_USER:zjh_read}
+      password: ${CONVERSATION_DB_PASSWORD:9^4e70NT2cpqeIrNPAjo}
+
+    wecom:
+      enabled: ${WECOM_ENABLED:true}

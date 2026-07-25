@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.sliders.mapper.SlidersTaskMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.sliders.entity.SlidersTaskEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="task_id" jdbcType="VARCHAR" property="taskId"/>
+        <result column="thread_id" jdbcType="VARCHAR" property="threadId"/>
+        <result column="question" jdbcType="VARCHAR" property="question"/>
+        <result column="status" jdbcType="VARCHAR" property="status"/>
+        <result column="answer" jdbcType="VARCHAR" property="answer"/>
+        <result column="error_message" jdbcType="VARCHAR" property="errorMessage"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+        <result column="updated_at" jdbcType="TIMESTAMP" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`, `task_id`, `thread_id`, `question`, `status`,
+        `answer`, `error_message`, `created_at`, `updated_at`
+    </sql>
+
+</mapper>

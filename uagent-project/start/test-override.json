@@ -1,0 +1,6 @@
+{
+  "instruction": "创建一个简单的 Python 脚本 hello.py，输出 Hello World",
+  "verifier": "{\"exitCodeMustBe\":0,\"fileExists\":[\"hello.py\"],\"stdoutContains\":[\"Hello\"]}",
+  "maxIterations": 1,
+  "nExploration": 2
+}

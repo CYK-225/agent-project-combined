@@ -1,0 +1,748 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBAgent - 代码生成工具</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 0; margin-bottom: 20px; }
+        header h1 { text-align: center; font-size: 28px; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+        .card h2 { color: #667eea; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .form-group { flex: 1; margin-bottom: 0; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; color: #555; font-size: 14px; }
+        select, input, button { width: 100%; padding: 10px 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        select:focus, input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 2px rgba(102,126,234,0.2); }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; cursor: pointer; font-weight: 500; transition: transform 0.2s, box-shadow 0.2s; padding: 10px 20px; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+        .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-secondary { background: #6c757d; }
+        .btn-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .btn-sm { padding: 8px 15px; font-size: 13px; }
+        .status { padding: 10px 15px; border-radius: 4px; margin-top: 10px; display: none; }
+        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; display: block; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; display: block; }
+        .status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; display: block; }
+        .table-list { max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; margin-top: 10px; }
+        .table-checkbox { display: flex; align-items: center; gap: 10px; padding: 10px 15px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; }
+        .table-checkbox:hover { background: #f0f0f0; }
+        .table-checkbox.selected { background: #e8ecfd; }
+        .table-checkbox:last-child { border-bottom: none; }
+        .table-checkbox input[type="checkbox"] { width: auto; margin: 0; cursor: pointer; }
+        .selected-count { background: #667eea; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 8px; }
+        .batch-progress { margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px; display: none; }
+        .progress-bar { height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.3s; width: 0%; }
+        .batch-result { margin-top: 10px; font-size: 13px; }
+        .batch-result.success { color: #28a745; }
+        .batch-result.error { color: #dc3545; }
+        .btn-batch { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .change-list { list-style: none; margin-top: 10px; }
+        .change-list li { padding: 8px 12px; background: #f8f9fa; border-radius: 4px; margin-bottom: 5px; font-size: 14px; }
+        .change-list li::before { content: "\2022"; color: #667eea; font-weight: bold; margin-right: 8px; }
+        .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .connection-status { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 12px; background: #f8f9fa; border-radius: 4px; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; }
+        .status-dot.connected { background: #28a745; }
+        .status-dot.error { background: #dc3545; }
+        .mode-selector { display: flex; gap: 10px; margin-top: 10px; }
+        .mode-option { flex: 1; padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.2s; }
+        .mode-option:hover { border-color: #667eea; }
+        .mode-option.selected { border-color: #667eea; background: rgba(102,126,234,0.1); }
+        .mode-option h4 { margin-bottom: 5px; color: #333; }
+        .mode-option p { font-size: 12px; color: #666; }
+        .config-toggle { cursor: pointer; user-select: none; }
+        .config-toggle::after { content: " \25BC"; font-size: 12px; }
+        .config-content { display: none; }
+        .config-content.show { display: block; }
+        .password-input { position: relative; }
+        .password-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #666; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>DBAgent - 代码生成工具</h1>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- 数据库配置 -->
+        <div class="card">
+            <h2 class="config-toggle" onclick="toggleConfig('dbConfig')">数据库连接配置</h2>
+            <div id="dbConfig" class="config-content show">
+                <div class="form-row">
+                    <div class="form-group" style="max-width: 180px;">
+                        <label>数据库类型</label>
+                        <select id="dbType" onchange="onDbTypeChange()">
+                            <option value="auto" selected>自动识别</option>
+                            <option value="mysql">MySQL</option>
+                            <option value="postgresql">PostgreSQL</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>数据库主机<span style="color:#dc3545;">*</span></label>
+                        <input type="text" id="mysqlHost" placeholder="localhost" value="localhost">
+                    </div>
+                    <div class="form-group" style="max-width: 120px;">
+                        <label>端口 <span style="color:#dc3545;">*</span></label>
+                        <input type="number" id="mysqlPort" placeholder="3306" value="3306">
+                    </div>
+                    <div class="form-group" id="dbInputGroup">
+                        <label id="dbLabel">数据库名 <span style="color:#dc3545;">*</span></label>
+                        <input type="text" id="mysqlDatabase" placeholder="请输入数据库名">
+                    </div>
+                    <div class="form-group" id="schemaGroup" style="display: none; min-width: 220px;">
+                        <label>Schema名<span style="color:#dc3545;">*</span></label>
+                        <div style="display: flex; gap: 8px;">
+                            <select id="pgSchema" style="flex: 1;">
+                                <option value="">请先加载Schema</option>
+                            </select>
+                            <button class="btn btn-secondary btn-sm" onclick="loadSchemas()" style="white-space: nowrap; width: auto;">加载Schema</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row optional-field" style="display: none;">
+                    <div class="form-group">
+                        <label>数据库用户名 <span style="color:#999; font-weight:400;">（可选，留空用默认值）</span></label>
+                        <input type="text" id="mysqlUser" placeholder="留空则使用 YAML 默认配置">
+                    </div>
+                    <div class="form-group">
+                        <label>数据库密码<span style="color:#999; font-weight:400;">（可选，留空用默认值）</span></label>
+                        <div class="password-input">
+                            <input type="password" id="mysqlPassword" placeholder="留空则使用 YAML 默认配置">
+                            <span class="password-toggle" onclick="togglePassword('mysqlPassword')">&#128065;</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="testDbConnection()">测试数据库连接</button>
+                <div class="connection-status">
+                    <div class="status-dot" id="dbStatusDot"></div>
+                    <span id="dbStatusText">数据库: 未连接</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 表选择 -->
+        <div class="card">
+            <h2>选择表<span id="selectedCount" class="selected-count" style="display: none;">0</span></h2>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button class="btn" onclick="loadTableList()" style="flex: 1;">加载表列表</button>
+                <button class="btn btn-secondary btn-sm" onclick="selectAllTables()">全选</button>
+                <button class="btn btn-secondary btn-sm" onclick="deselectAllTables()">取消全选</button>
+            </div>
+            <div id="tableList" class="table-list" style="display: none;"></div>
+        </div>
+
+        <!-- Git配置 -->
+        <div class="card">
+            <h2 class="config-toggle" onclick="toggleConfig('gitConfig')">Git仓库配置</h2>
+            <div id="gitConfig" class="config-content show">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Git仓库地址 <span style="color:#dc3545;">*</span></label>
+                        <input type="text" id="gitRepoUrl" placeholder="https://github.com/xxx/xxx.git">
+                    </div>
+                    <div class="form-group" style="min-width: 260px;">
+                        <label>分支名称 <span style="color:#999; font-weight:400;">（可选，留空用默认值）</span></label>
+                        <div style="display: flex; gap: 8px;">
+                            <select id="gitBranch" style="flex: 1;">
+                                <option value="">不指定（默认）</option>
+                            </select>
+                            <button class="btn btn-secondary btn-sm" onclick="loadBranches()" style="white-space: nowrap; width: auto;">加载分支</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Git用户名<span style="color:#999; font-weight:400;">（可选，留空用默认值）</span></label>
+                        <input type="text" id="gitUsername" placeholder="留空则使用 YAML 默认配置">
+                    </div>
+                    <div class="form-group">
+                        <label>Git Token <span style="color:#999; font-weight:400;">（可选，留空用默认值）</span></label>
+                        <div class="password-input">
+                            <input type="password" id="gitToken" placeholder="留空则使用 YAML 默认配置">
+                            <span class="password-toggle" onclick="togglePassword('gitToken')">&#128065;</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="testGitConnection()">测试Git连接</button>
+                <div class="connection-status">
+                    <div class="status-dot" id="gitStatusDot"></div>
+                    <span id="gitStatusText">Git: 未连接</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 代码生成配置 -->
+        <div class="card optional-field" style="display: none;">
+            <h2 class="config-toggle" onclick="toggleConfig('codegenConfig')">代码生成配置</h2>
+            <div id="codegenConfig" class="config-content show">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>框架模板 <span style="color:#e74c3c;">*</span></label>
+                        <select id="framework" onchange="onFrameworkChange()">
+                            <option value="mybatis-flex">MyBatis-Flex</option>
+                            <option value="mybatis-plus">MyBatis-Plus</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>基础包名 <span style="color:#999; font-weight:400;">（可选，留空用默认值）</span></label>
+                        <input type="text" id="basePackage" placeholder="留空则使用默认 org.example.repository.dal">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 生成模式 -->
+        <div class="card" id="modeCard" style="display: none;">
+            <h2>生成模式</h2>
+            <div class="mode-selector">
+                <div class="mode-option selected" data-mode="auto" onclick="selectMode(this)">
+                    <h4>自动判断</h4>
+                    <p>首次自动全量，已有代码则增量</p>
+                </div>
+                <div class="mode-option" data-mode="full" onclick="selectMode(this)">
+                    <h4>全量生成</h4>
+                    <p>首次生成或重新生成所有代码</p>
+                </div>
+                <div class="mode-option" data-mode="incremental" onclick="selectMode(this)">
+                    <h4>增量更新</h4>
+                    <p>仅更新变更的字段，保留人类修改</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="card" id="actionCard" style="display: none;">
+            <h2>生成代码</h2>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-success" id="generateBtn" onclick="generateCode()">
+                    生成代码
+                </button>
+                <button class="btn btn-batch" id="batchGenerateBtn" onclick="batchGenerateCode()" style="display: none;">
+                    批量生成 <span id="batchCount"></span>
+                </button>
+            </div>
+            <div class="batch-progress" id="batchProgress">
+                <div>批量生成进度: <span id="batchProgressText">0/0</span></div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="batch-result" id="batchResult"></div>
+            </div>
+            <div class="status" id="resultStatus"></div>
+            <ul class="change-list" id="changeList" style="display: none;"></ul>
+        </div>
+
+        <!-- 任务状态 -->
+        <div class="card" id="taskCard" style="display: none;">
+            <h2>任务状态</h2>
+            <div id="taskStateText" style="margin-bottom: 8px; font-weight: 600;">空闲</div>
+            <div id="taskMessageText" style="color: #666; font-size: 13px; margin-bottom: 10px;"></div>
+            <button class="btn btn-secondary btn-sm" onclick="refreshTaskStatus()">刷新状态</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedTableName = null;
+        let selectedTableNames = [];
+        let selectedMode = 'auto';
+        let tableSchemas = {};
+
+        function toggleConfig(id) {
+            document.getElementById(id).classList.toggle('show');
+        }
+
+        function togglePassword(id) {
+            const input = document.getElementById(id);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function getConfig() {
+            const dbType = document.getElementById('dbType').value || 'auto';
+            const defaultPort = dbType === 'postgresql' ? '5432' : '3306';
+            const isPg = dbType === 'postgresql';
+            const database = isPg
+                ? (document.getElementById('pgSchema').value || '')
+                : (document.getElementById('mysqlDatabase').value || '');
+
+            return {
+                dbType,
+                mysqlHost: document.getElementById('mysqlHost').value || 'localhost',
+                mysqlPort: document.getElementById('mysqlPort').value || defaultPort,
+                mysqlDatabase: database,
+                mysqlUser: document.getElementById('mysqlUser').value || null,
+                mysqlPassword: document.getElementById('mysqlPassword').value || null,
+                gitRepoUrl: document.getElementById('gitRepoUrl').value,
+                gitBranch: document.getElementById('gitBranch').value || null,
+                gitUsername: document.getElementById('gitUsername').value || null,
+                gitToken: document.getElementById('gitToken').value || null,
+                basePackage: document.getElementById('basePackage').value || null,
+                framework: document.getElementById('framework').value || 'mybatis-flex',
+                tableName: getSelectedTableNames()[0] || null
+            };
+        }
+
+        function onFrameworkChange() {
+            console.log('框架模板:', document.getElementById('framework').value);
+        }
+
+        function onDbTypeChange() {
+            const dbType = document.getElementById('dbType').value;
+            const isPg = dbType === 'postgresql';
+            document.getElementById('dbInputGroup').style.display = isPg ? 'none' : '';
+            document.getElementById('schemaGroup').style.display = isPg ? '' : 'none';
+            if (isPg) {
+                document.getElementById('mysqlPort').value = '5432';
+            } else if (dbType === 'mysql') {
+                document.getElementById('mysqlPort').value = '3306';
+            }
+        }
+
+        async function loadSchemas() {
+            const config = getConfig();
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '加载中..';
+            try {
+                const response = await fetch('/api/dbagent/schemas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                const data = await response.json();
+                const select = document.getElementById('pgSchema');
+                select.innerHTML = '<option value="">请选择Schema</option>';
+                if (data.success && data.schemas && data.schemas.length > 0) {
+                    data.schemas.forEach(schema => {
+                        const option = document.createElement('option');
+                        option.value = schema;
+                        option.textContent = schema;
+                        select.appendChild(option);
+                    });
+                    showInfo('已加载 ' + data.schemas.length + ' 个Schema');
+                } else {
+                    select.innerHTML = '<option value="">未找到Schema</option>';
+                    showInfo(data.error || '未找到Schema');
+                }
+            } catch (error) {
+                showInfo('加载Schema列表失败: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '加载Schema';
+            }
+        }
+
+        // 加载表列表 - 填充 checkbox 列表
+        async function loadTableList() {
+            const config = getConfig();
+            const isPg = config.dbType === 'postgresql';
+            if (!config.mysqlDatabase) {
+                showInfo(isPg ? '请先选择Schema' : '请输入数据库名');
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '加载中...';
+
+            try {
+                const response = await fetch('/api/dbagent/tables', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                const data = await response.json();
+
+                const tableList = document.getElementById('tableList');
+                tableList.innerHTML = '';
+
+                if (data.success && data.tables && data.tables.length > 0) {
+                    data.tables.forEach(tableName => {
+                        const div = document.createElement('div');
+                        div.className = 'table-checkbox';
+                        div.innerHTML = '<input type="checkbox" id="tbl_' + tableName + '" value="' + tableName + '"> <label for="tbl_' + tableName + '" style="cursor:pointer;flex:1">' + tableName + '</label>';
+                        div.addEventListener('click', function(e) {
+                            if (e.target.type !== 'checkbox') {
+                                const cb = this.querySelector('input[type="checkbox"]');
+                                cb.checked = !cb.checked;
+                            }
+                            this.classList.toggle('selected', this.querySelector('input').checked);
+                            updateSelectedCount();
+                        });
+                        tableList.appendChild(div);
+                    });
+                    tableList.style.display = 'block';
+                    showInfo('已加载 ' + data.tables.length + ' 张表，请勾选后生成');
+                    document.getElementById('modeCard').style.display = 'block';
+                    document.getElementById('actionCard').style.display = 'block';
+                } else {
+                    tableList.innerHTML = '<div style="padding:15px;color:#999;">未找到表</div>';
+                    tableList.style.display = 'block';
+                    showInfo(data.error || '未找到表');
+                }
+            } catch (error) {
+                showInfo('加载表列表失败: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '加载表列表';
+            }
+        }
+
+        function getSelectedTableNames() {
+            const checkboxes = document.querySelectorAll('#tableList input[type="checkbox"]:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        function updateSelectedCount() {
+            const count = getSelectedTableNames().length;
+            const badge = document.getElementById('selectedCount');
+            const batchBtn = document.getElementById('batchGenerateBtn');
+            const generateBtn = document.getElementById('generateBtn');
+
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'inline';
+                generateBtn.textContent = count === 1 ? '生成代码' : '生成代码 (' + count + '张表)';
+                if (count > 1) {
+                    batchBtn.style.display = 'inline-block';
+                    document.getElementById('batchCount').textContent = '(' + count + ')';
+                } else {
+                    batchBtn.style.display = 'none';
+                }
+            } else {
+                badge.style.display = 'none';
+                generateBtn.textContent = '生成代码';
+                batchBtn.style.display = 'none';
+            }
+        }
+
+        function selectAllTables() {
+            document.querySelectorAll('#tableList input[type="checkbox"]').forEach(cb => {
+                cb.checked = true;
+                cb.closest('.table-checkbox').classList.add('selected');
+            });
+            updateSelectedCount();
+        }
+
+        function deselectAllTables() {
+            document.querySelectorAll('#tableList input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+                cb.closest('.table-checkbox').classList.remove('selected');
+            });
+            updateSelectedCount();
+        }
+
+        async function loadBranches() {
+            const config = getConfig();
+            if (!config.gitRepoUrl) {
+                showStatus('error', '请输入Git仓库地址');
+                return;
+            }
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '加载中..';
+            try {
+                const response = await fetch('/api/dbagent/branches', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                const data = await response.json();
+                const select = document.getElementById('gitBranch');
+                select.innerHTML = '<option value="">不指定（默认）</option>';
+                if (data.success && data.branches && data.branches.length > 0) {
+                    data.branches.forEach(branch => {
+                        const option = document.createElement('option');
+                        option.value = branch;
+                        option.textContent = branch;
+                        select.appendChild(option);
+                    });
+                    showInfo('已加载 ' + data.branches.length + ' 个分支');
+                } else {
+                    showInfo(data.error || '未找到分支');
+                }
+            } catch (error) {
+                showInfo('加载分支列表失败: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '加载分支';
+            }
+        }
+
+        function selectMode(element) {
+            document.querySelectorAll('.mode-option').forEach(item => item.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedMode = element.dataset.mode;
+        }
+
+        // 生成代码 - 单表或多表
+        async function generateCode() {
+            const tableNames = getSelectedTableNames();
+            if (tableNames.length === 0) {
+                showStatus('error', '请先勾选要生成的表');
+                return;
+            }
+            const config = getConfig();
+            if (!config.gitRepoUrl) {
+                showStatus('error', '请输入Git仓库地址');
+                return;
+            }
+            if (tableNames.length === 1) {
+                await generateSingleTable(config, tableNames[0]);
+            } else {
+                await batchGenerateCodeInternal(config, tableNames);
+            }
+        }
+
+        async function generateSingleTable(config, tableName) {
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> 生成中...';
+            try {
+                const response = await fetch('/api/dbagent/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...config, tableName, mode: selectedMode })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showStatus('success', tableName + ' 代码生成成功' + (config.gitBranch ? '，已提交到分支: ' + config.gitBranch : ''));
+                    if (data.changes && data.changes.length > 0) {
+                        const changeList = document.getElementById('changeList');
+                        changeList.innerHTML = data.changes.map(c => '<li>' + c + '</li>').join('');
+                        changeList.style.display = 'block';
+                    }
+                    if (data.taskState) updateTaskUI(data.taskState, data.taskMessage);
+                } else {
+                    showStatus('error', tableName + ' 生成失败: ' + data.error);
+                    if (data.taskState) updateTaskUI(data.taskState, data.taskMessage);
+                }
+            } catch (error) {
+                showStatus('error', '请求失败: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '生成代码';
+            }
+        }
+
+        // 批量生成
+        async function batchGenerateCode() {
+            const tableNames = getSelectedTableNames();
+            if (tableNames.length === 0) {
+                showStatus('error', '请先勾选要生成的表');
+                return;
+            }
+            const config = getConfig();
+            if (!config.gitRepoUrl) {
+                showStatus('error', '请输入Git仓库地址');
+                return;
+            }
+            await batchGenerateCodeInternal(config, tableNames);
+        }
+
+        async function batchGenerateCodeInternal(config, tableNames) {
+            const btn = document.getElementById('generateBtn');
+            const progressDiv = document.getElementById('batchProgress');
+            const progressText = document.getElementById('batchProgressText');
+            const progressFill = document.getElementById('progressFill');
+            const batchResult = document.getElementById('batchResult');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> 批量生成中...';
+            progressDiv.style.display = 'block';
+            progressText.textContent = '0/' + tableNames.length;
+            progressFill.style.width = '0%';
+            batchResult.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/dbagent/batch-generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...config, tableNames, mode: selectedMode })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    progressText.textContent = data.total + '/' + data.total;
+                    progressFill.style.width = '100%';
+                    if (data.results) {
+                        data.results.forEach(function(r) {
+                            if (r.success) {
+                                batchResult.innerHTML += '<div class="success">\u2713 ' + r.tableName + ' 生成成功</div>';
+                            } else {
+                                batchResult.innerHTML += '<div class="error">\u2717 ' + r.tableName + ' 生成失败: ' + r.error + '</div>';
+                            }
+                        });
+                    }
+                    const msg = '批量生成完成: 成功 ' + data.successCount + ' 张，失败 ' + data.failCount + ' 张';
+                    showStatus(data.successCount > 0 ? 'success' : 'error', msg);
+                    if (data.changes && data.changes.length > 0) {
+                        const changeList = document.getElementById('changeList');
+                        changeList.innerHTML = data.changes.map(function(c) { return '<li>' + c + '</li>'; }).join('');
+                        changeList.style.display = 'block';
+                    }
+                } else {
+                    showStatus('error', '批量生成失败: ' + data.error);
+                }
+            } catch (error) {
+                showStatus('error', '请求失败: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '生成代码';
+            }
+        }
+
+        async function testDbConnection() {
+            const config = getConfig();
+            if (!config.mysqlDatabase) {
+                showStatus('error', '请输入数据库名');
+                return;
+            }
+            try {
+                const response = await fetch('/api/dbagent/test-db-connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                const data = await response.json();
+                const dot = document.getElementById('dbStatusDot');
+                const text = document.getElementById('dbStatusText');
+                if (data.success) {
+                    dot.classList.add('connected'); dot.classList.remove('error');
+                    text.textContent = '数据库: 已连接';
+                    showStatus('success', '数据库连接成功');
+                } else {
+                    dot.classList.add('error'); dot.classList.remove('connected');
+                    text.textContent = '数据库: 连接失败';
+                    showStatus('error', '数据库连接失败');
+                }
+            } catch (error) {
+                document.getElementById('dbStatusDot').classList.add('error');
+                document.getElementById('dbStatusDot').classList.remove('connected');
+                document.getElementById('dbStatusText').textContent = '数据库: 请求失败';
+                showStatus('error', '请求失败: ' + error.message);
+            }
+        }
+
+        async function testGitConnection() {
+            const config = getConfig();
+            if (!config.gitRepoUrl) {
+                showStatus('error', '请输入Git仓库地址');
+                return;
+            }
+            try {
+                const response = await fetch('/api/dbagent/test-git-connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                const data = await response.json();
+                const dot = document.getElementById('gitStatusDot');
+                const text = document.getElementById('gitStatusText');
+                if (data.success) {
+                    dot.classList.add('connected'); dot.classList.remove('error');
+                    text.textContent = 'Git: 已连接';
+                    showStatus('success', 'Git连接成功');
+                } else {
+                    dot.classList.add('error'); dot.classList.remove('connected');
+                    text.textContent = 'Git: 连接失败';
+                    showStatus('error', 'Git连接失败');
+                }
+            } catch (error) {
+                document.getElementById('gitStatusDot').classList.add('error');
+                document.getElementById('gitStatusDot').classList.remove('connected');
+                document.getElementById('gitStatusText').textContent = 'Git: 请求失败';
+                showStatus('error', '请求失败: ' + error.message);
+            }
+        }
+
+        function showStatus(type, message) {
+            const status = document.getElementById('resultStatus');
+            status.className = 'status ' + type;
+            status.textContent = message;
+            if (type === 'success' || type === 'error') {
+                sendBrowserNotification(type === 'success' ? 'DBAgent 任务完成' : 'DBAgent 任务失败', message);
+            }
+        }
+
+        function showInfo(message) {
+            const status = document.getElementById('resultStatus');
+            status.className = 'status info';
+            status.textContent = message;
+        }
+
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+
+        function sendBrowserNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, { body });
+            }
+        }
+
+        function updateTaskUI(taskState, taskMessage) {
+            const card = document.getElementById('taskCard');
+            const stateText = document.getElementById('taskStateText');
+            if (!card || !stateText) return;
+            card.style.display = 'block';
+            const stateMap = { 'IDLE': '空闲', 'GENERATING': '生成中', 'GENERATED': '已生成', 'FAILED': '失败' };
+            stateText.textContent = stateMap[taskState] || taskState;
+            document.getElementById('taskMessageText').textContent = taskMessage || '';
+        }
+
+        async function refreshTaskStatus() {
+            const tableNames = getSelectedTableNames();
+            if (tableNames.length === 0) {
+                showStatus('error', '请先选择表');
+                return;
+            }
+            const config = getConfig();
+            for (const tableName of tableNames) {
+                try {
+                    const response = await fetch('/api/dbagent/task-status', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ...config, tableName })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        updateTaskUI(data.taskState, data.taskMessage);
+                    } else {
+                        showInfo(tableName + ' 状态: ' + (data.error || '未知'));
+                    }
+                } catch (error) {
+                    showInfo('查询失败: ' + error.message);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            requestNotificationPermission();
+            await loadFrontendConfig();
+        });
+
+        async function loadFrontendConfig() {
+            try {
+                const response = await fetch('/api/dbagent/frontend-config');
+                const data = await response.json();
+                if (data.showOptional) {
+                    document.querySelectorAll('.optional-field').forEach(el => {
+                        el.style.display = '';
+                    });
+                }
+            } catch (e) {
+                console.warn('获取前端配置失败，选填项默认隐藏', e);
+            }
+        }
+    </script>
+</body>
+</html>

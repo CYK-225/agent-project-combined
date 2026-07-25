@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.sliders.mapper.SlidersDocumentMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.sliders.entity.SlidersDocumentEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="task_id" jdbcType="VARCHAR" property="taskId"/>
+        <result column="document_name" jdbcType="VARCHAR" property="documentName"/>
+        <result column="description" jdbcType="VARCHAR" property="description"/>
+        <result column="content" jdbcType="VARCHAR" property="content"/>
+        <result column="file_path" jdbcType="VARCHAR" property="filePath"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`, `task_id`, `document_name`, `description`,
+        `content`, `file_path`, `created_at`
+    </sql>
+
+</mapper>

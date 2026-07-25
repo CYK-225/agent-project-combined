@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.sliders.mapper.SlidersChunkMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.sliders.entity.SlidersChunkEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="task_id" jdbcType="VARCHAR" property="taskId"/>
+        <result column="document_name" jdbcType="VARCHAR" property="documentName"/>
+        <result column="chunk_index" jdbcType="INTEGER" property="chunkIndex"/>
+        <result column="chunk_id" jdbcType="VARCHAR" property="chunkId"/>
+        <result column="content" jdbcType="VARCHAR" property="content"/>
+        <result column="chunk_header" jdbcType="VARCHAR" property="chunkHeader"/>
+        <result column="metadata" jdbcType="VARCHAR" property="metadata"/>
+        <result column="is_relevant" jdbcType="BOOLEAN" property="isRelevant"/>
+        <result column="relevance_reason" jdbcType="VARCHAR" property="relevanceReason"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`, `task_id`, `document_name`, `chunk_index`, `chunk_id`,
+        `content`, `chunk_header`, `metadata`, `is_relevant`,
+        `relevance_reason`, `created_at`
+    </sql>
+
+</mapper>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.agent.supplyPlanAgent.dal.mapper.DishMapper">
+    <resultMap id="BaseResultMap" type="org.example.agent.supplyPlanAgent.dal.entity.DishEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="source" jdbcType="VARCHAR" property="source"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="dish_type" jdbcType="VARCHAR" property="dishType"/>
+        <result column="spicy_level" jdbcType="INTEGER" property="spicyLevel"/>
+        <result column="cooking_method" jdbcType="VARCHAR" property="cookingMethod"/>
+        <result column="other_cost" jdbcType="NUMERIC" property="otherCost"/>
+        <result column="unit_price_kg" jdbcType="NUMERIC" property="unitPriceKg"/>
+        <result column="edible_ratio" jdbcType="NUMERIC" property="edibleRatio"/>
+        <result column="create_by" jdbcType="VARCHAR" property="createBy"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_by" jdbcType="VARCHAR" property="updateBy"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+        <result column="is_seasonal" jdbcType="BOOLEAN" property="isSeasonal"/>
+        <result column="all_cost" jdbcType="NUMERIC" property="allCost"/>
+        <result column="main_ingredients" jdbcType="OTHER" property="mainIngredients" typeHandler="com.mybatisflex.core.handler.Fastjson2TypeHandler"/>
+        <result column="side_ingredients" jdbcType="OTHER" property="sideIngredients" typeHandler="com.mybatisflex.core.handler.Fastjson2TypeHandler"/>
+        <result column="seasonings" jdbcType="OTHER" property="seasonings" typeHandler="com.mybatisflex.core.handler.Fastjson2TypeHandler"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id, source, name, dish_type, spicy_level, cooking_method, other_cost, unit_price_kg,
+        edible_ratio, create_by, create_time, update_by, update_time, is_seasonal, all_cost,
+        main_ingredients, side_ingredients, seasonings
+    </sql>
+
+</mapper>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.agent.user.dal.mapper.UserCompanyRelationMapper">
+    <resultMap id="BaseResultMap" type="org.example.agent.user.dal.entity.UserCompanyRelationEntity">
+        <id column="relation_id" jdbcType="BIGINT" property="relationId"/>
+        <result column="user_id" jdbcType="BIGINT" property="userId"/>
+        <result column="company_id" jdbcType="BIGINT" property="companyId"/>
+        <result column="employee_no" jdbcType="VARCHAR" property="employeeNo"/>
+        <result column="position" jdbcType="VARCHAR" property="position"/>
+        <result column="entry_date" jdbcType="DATE" property="entryDate"/>
+        <result column="status" jdbcType="SMALLINT" property="status"/>
+        <result column="create_by" jdbcType="VARCHAR" property="createBy"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_by" jdbcType="VARCHAR" property="updateBy"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        `relation_id`, `user_id`, `company_id`, `employee_no`, `position`, `entry_date`, `status`, `create_by`,
+        `create_time`, `update_by`, `update_time`
+    </sql>
+
+</mapper>

@@ -1,0 +1,92 @@
+# DBAgent 类型映射配置
+# 配置数据库类型到Java类型的映射规则
+# 支持自定义JSONB字段映射到具体Java类
+
+# 基础类型映射（标准类型）
+basic-mappings:
+  # 整数类型
+  BIGINT: Long
+  BIGSERIAL: Long
+  INT8: Long
+  INT: Integer
+  INTEGER: Integer
+  SERIAL: Integer
+  INT4: Integer
+  SMALLINT: Integer
+  INT2: Integer
+  TINYINT: Integer
+
+  # 布尔类型
+  BOOL: Boolean
+  BOOLEAN: Boolean
+  BIT: Boolean
+
+  # 浮点类型
+  FLOAT: Float
+  FLOAT4: Float
+  REAL: Float
+  DOUBLE: Double
+  FLOAT8: Double
+  "DOUBLE PRECISION": Double
+  DECIMAL: java.math.BigDecimal
+  NUMERIC: java.math.BigDecimal
+
+  # 字符串类型
+  VARCHAR: String
+  CHAR: String
+  "CHARACTER VARYING": String
+  BPCHAR: String
+  TEXT: String
+  TINYTEXT: String
+  MEDIUMTEXT: String
+  LONGTEXT: String
+  ENUM: String
+  SET: String
+  UUID: String
+  CIDR: String
+  INET: String
+  MACADDR: String
+  XML: String
+  JSON: String
+
+  # 日期时间类型
+  DATE: java.time.LocalDate
+  DATETIME: java.time.LocalDateTime
+  TIMESTAMP: java.time.LocalDateTime
+  TIMESTAMPTZ: java.time.LocalDateTime
+  "TIMESTAMP WITH TIME ZONE": java.time.LocalDateTime
+  "TIMESTAMP WITHOUT TIME ZONE": java.time.LocalDateTime
+  TIME: java.time.LocalTime
+  TIMETZ: java.time.LocalTime
+  "TIME WITH TIME ZONE": java.time.LocalTime
+  "TIME WITHOUT TIME ZONE": java.time.LocalTime
+  YEAR: Integer
+
+  # 二进制类型
+  BLOB: byte[]
+  TINYBLOB: byte[]
+  MEDIUMBLOB: byte[]
+  LONGBLOB: byte[]
+  BINARY: byte[]
+  VARBINARY: byte[]
+  BYTEA: byte[]
+
+# JSONB字段自定义类映射
+# 格式: 表名.字段名 -> 完整类名
+# 支持通配符: *.字段名 或 表名.*
+jsonb-mappings:
+  # 示例配置（根据实际业务修改）
+  # user_profile.settings: com.example.model.UserSettings
+  # order.metadata: com.example.model.OrderMetadata
+  # *.config: com.example.model.SystemConfig
+
+  # 默认映射（当没有匹配到具体字段时使用，使用DEFAULT作为全局通配符键）
+  DEFAULT: com.fasterxml.jackson.databind.JsonNode
+
+# TypeHandler配置
+# MyBatis TypeHandler全类名，用于JSONB等复杂类型的序列化/反序列化
+type-handlers:
+  # JSONB类型的TypeHandler
+  JSONB: com.example.handler.JsonbTypeHandler
+  # JSON类型的TypeHandler（可选）
+  JSON: com.example.handler.JsonTypeHandler

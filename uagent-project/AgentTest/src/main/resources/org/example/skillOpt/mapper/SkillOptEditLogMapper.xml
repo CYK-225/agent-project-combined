@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.skillOpt.mapper.SkillOptEditLogMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.skillOpt.entity.SkillOptEditLogEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="job_id" jdbcType="VARCHAR" property="jobId"/>
+        <result column="epoch" jdbcType="INTEGER" property="epoch"/>
+        <result column="edit_index" jdbcType="INTEGER" property="editIndex"/>
+        <result column="edit_type" jdbcType="VARCHAR" property="editType"/>
+        <result column="target_section" jdbcType="VARCHAR" property="targetSection"/>
+        <result column="content" jdbcType="VARCHAR" property="content"/>
+        <result column="rationale" jdbcType="VARCHAR" property="rationale"/>
+        <result column="priority" jdbcType="DOUBLE" property="priority"/>
+        <result column="applied" jdbcType="BOOLEAN" property="applied"/>
+        <result column="skipped_reason" jdbcType="VARCHAR" property="skippedReason"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`, `job_id`, `epoch`, `edit_index`, `edit_type`, `target_section`,
+        `content`, `rationale`, `priority`, `applied`, `skipped_reason`, `created_at`
+    </sql>
+
+</mapper>

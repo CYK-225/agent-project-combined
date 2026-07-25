@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.sliders.mapper.SlidersReconciledTableMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.sliders.entity.SlidersReconciledTableEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="task_id" jdbcType="VARCHAR" property="taskId"/>
+        <result column="table_name" jdbcType="VARCHAR" property="tableName"/>
+        <result column="row_index" jdbcType="INTEGER" property="rowIndex"/>
+        <result column="row_data" jdbcType="VARCHAR" property="rowData"/>
+        <result column="provenance" jdbcType="VARCHAR" property="provenance"/>
+        <result column="reconciliation_context" jdbcType="VARCHAR" property="reconciliationContext"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`, `task_id`, `table_name`, `row_index`, `row_data`,
+        `provenance`, `reconciliation_context`, `created_at`
+    </sql>
+
+</mapper>

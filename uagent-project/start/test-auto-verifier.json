@@ -1,0 +1,5 @@
+{
+  "instruction": "创建一个 Python 函数 is_palindrome(s)，判断字符串是否为回文，并写 test_palindrome.py 用 pytest 测试",
+  "maxIterations": 1,
+  "nExploration": 2
+}

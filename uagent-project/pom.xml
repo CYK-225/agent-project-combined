@@ -1,0 +1,705 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.9</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <groupId>org.example</groupId>
+    <artifactId>MASFanPlus</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>MASFanPlus</name>
+    <description>MASFanPlus</description>
+    <modules>
+        <module>AgentScopeGraphYFMax</module>
+        <module>AgentScopeYFMax</module>
+        <module>AgentServiceCar</module>
+        <module>AgentServiceHR</module>
+        <module>AgentTest</module>
+        <module>AgentEmbabel</module>
+        <module>start</module>
+    </modules>
+    <!-- Maven Central is included by default in Maven builds.
+         You usually don’t need to configure it explicitly,
+         but it's shown here for clarity. -->
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+    </repositories>
+    <properties>
+        <maven.compiler.parameters>true</maven.compiler.parameters>
+        <java.version>21</java.version>
+        <spring.boot.version>3.4.9</spring.boot.version>
+        <mapstruct-plus.version>1.4.8</mapstruct-plus.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+        <spring-ai.version>1.1.2</spring-ai.version>
+        <spring-ai-alibaba.version>1.1.2.2</spring-ai-alibaba.version>
+
+    </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.alibaba.cloud.ai</groupId>
+                <artifactId>spring-ai-alibaba-bom</artifactId>
+                <version>${spring-ai-alibaba.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry.instrumentation</groupId>
+                <artifactId>opentelemetry-instrumentation-bom</artifactId>
+                <version>2.17.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.agentscope</groupId>
+                <artifactId>agentscope-dependencies-bom</artifactId>
+                <version>1.0.10</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.agentscope</groupId>
+                <artifactId>agentscope-bom</artifactId>
+                <version>1.0.10</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!--            类转换器-->
+            <dependency>
+                <groupId>io.github.linpeilie</groupId>
+                <artifactId>mapstruct-plus-spring-boot-starter</artifactId>
+                <version>${mapstruct-plus.version}</version>
+            </dependency>
+            <!--            类转换器-->
+
+
+
+
+            <!--        docker操控-->
+            <dependency>
+                <groupId>com.github.docker-java</groupId>
+                <artifactId>docker-java-core</artifactId>
+                <version>3.3.6</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.docker-java</groupId>
+                <artifactId>docker-java-transport-httpclient5</artifactId>
+                <version>3.3.6</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.mwiede.dockerjava</groupId>
+                <artifactId>docker-java-transport-jsch</artifactId>
+                <version>1.4</version>
+            </dependency>
+            <!--        docker操控-->
+            <!--        监控-->
+            <!--        <dependency>-->
+            <!--            <groupId>io.opentelemetry</groupId>-->
+            <!--            <artifactId>opentelemetry-exporter-sender-okhttp</artifactId>-->
+            <!--            <version>1.38.0</version> </dependency>-->
+            <dependency>
+                <groupId>com.langfuse</groupId>
+                <artifactId>langfuse-java</artifactId>
+                <version>0.1.2</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>4.12.0</version> </dependency>
+            <!--        <dependency>-->
+            <!--            <groupId>io.opentelemetry.instrumentation</groupId>-->
+            <!--            <artifactId>opentelemetry-spring-boot-starter</artifactId>-->
+            <!--        </dependency>-->
+            <!-- Spring Boot Actuator for observability support -->
+
+
+
+
+            <!-- Studio -->
+
+            <!--        监控-->
+
+
+            <!--        多数据库访问-->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>dynamic-datasource-spring-boot3-starter</artifactId>
+                <version>4.3.1</version>
+            </dependency>
+            <!--        多数据库访问-->
+
+
+            <!--        文件解析,数据提取-->
+            <!-- Tika 核心包（基础格式解析） -->
+            <dependency>
+                <groupId>org.apache.tika</groupId>
+                <artifactId>tika-core</artifactId>
+                <version>3.2.2</version> <!-- 推荐使用 Maven 仓库最新稳定版 -->
+            </dependency>
+            <!-- Tika 扩展包（Office、PDF 等复杂格式解析） -->
+            <dependency>
+                <groupId>org.apache.tika</groupId>
+                <artifactId>tika-parsers-standard-package</artifactId>
+                <version>2.9.0</version>
+                <type>pom</type>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.tika</groupId>
+                <artifactId>tika-parsers</artifactId>
+                <version>2.9.0</version>
+                <type>pom</type>
+            </dependency>
+            <!-- Tesseract Java 客户端 -->
+            <dependency>
+                <groupId>net.sourceforge.tess4j</groupId>
+                <artifactId>tess4j</artifactId>
+                <version>5.8.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>1.17.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>5.4.0</version>
+            </dependency>
+            <!-- EasyExcel -->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>easyexcel</artifactId>
+                <version>4.0.3</version>
+            </dependency>
+            <!-- POI 5.4.0 需要的依赖版本，强制覆盖 EasyExcel 带的旧版本 -->
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.18.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>1.26.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>4.4</version>
+            </dependency>
+            <!--        文件解析,数据提取-->
+
+            <!--        java调用模型-->
+            <dependency>
+                <groupId>com.microsoft.onnxruntime</groupId>
+                <artifactId>onnxruntime</artifactId>
+                <version>1.17.0</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/org.apdplat/word -->
+            <dependency>
+                <groupId>com.hankcs</groupId>
+                <artifactId>hanlp</artifactId>
+                <version>portable-1.8.6</version>
+            </dependency>
+            <!--        java调用模型-->
+
+            <dependency>
+                <groupId>ai.djl.huggingface</groupId>
+                <artifactId>tokenizers</artifactId>
+                <version>0.32.0</version>
+            </dependency>
+
+
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>33.4.0-jre</version>
+            </dependency>
+
+
+            <!--        Agent接入-->
+            <dependency>
+                <groupId>io.agentscope</groupId>
+                <artifactId>agentscope-spring-boot-starter</artifactId>
+                <version>1.0.8</version>
+            </dependency>
+
+            <!--        embdeing-->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>dashscope-sdk-java</artifactId>
+                <version>2.22.6</version>
+            </dependency>
+            <!--        embdeing-->
+
+
+
+
+
+
+
+
+
+            <!--        数据库-->
+            <dependency>
+                <groupId>redis.clients</groupId>
+                <artifactId>jedis</artifactId>
+                <version>5.2.0</version>
+            </dependency>
+
+
+            <!-- JetCache 核心依赖 -->
+            <dependency>
+                <groupId>com.alicp.jetcache</groupId>
+                <artifactId>jetcache-starter-redis-lettuce</artifactId>
+                <version>2.7.5</version>
+            </dependency>
+            <!-- JetCache 核心依赖 -->
+            <!--       Disruptor 核心库 -->
+            <dependency>
+                <groupId>com.lmax</groupId>
+                <artifactId>disruptor</artifactId>
+                <version>3.4.4</version>
+
+            </dependency>
+            <!--       Disruptor 核心库 -->
+            <!--        Hutool-->
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>5.8.20</version> <!-- 请根据需要使用最新版本 -->
+            </dependency>
+            <!--        Hutool-->
+
+
+            <!--        图数据库-->
+
+            <!--        Milvus向量数据库-->
+
+            <dependency>
+                <groupId>io.milvus</groupId>
+                <artifactId>milvus-sdk-java</artifactId>
+                <version>2.6.5</version>
+            </dependency>
+            <!--        Milvus向量数据库-->
+            <!--        AI数据库-->
+
+            <!-- JGit 依赖 -->
+            <dependency>
+                <groupId>org.eclipse.jgit</groupId>
+                <artifactId>org.eclipse.jgit</artifactId>
+                <version>6.10.0.202406032230-r</version>
+            </dependency>
+            <!-- JGit 依赖 -->
+
+            <!--        JSON序列化-->
+            <!-- fastjson2 -->
+            <dependency>
+                <groupId>com.alibaba.fastjson2</groupId>
+                <artifactId>fastjson2</artifactId>
+                <version>2.0.40</version>
+            </dependency>
+            <!-- fastjson2 -->
+            <!--        JSON序列化-->
+
+            <!--        状态机statemachine-->
+            <dependency>
+                <groupId>org.springframework.statemachine</groupId>
+                <artifactId>spring-statemachine-core</artifactId>
+                <version>4.0.0</version>
+            </dependency>
+            <!--        状态机statemachine-->
+
+            <!--        mybatis-flex-->
+            <dependency>
+                <groupId>com.mybatis-flex</groupId>
+                <artifactId>mybatis-flex-spring-boot3-starter</artifactId>
+                <version>1.11.3</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mybatis-flex</groupId>
+                <artifactId>mybatis-flex-annotation</artifactId>
+                <version>1.11.3</version>  <!-- 使用你项目中对应的版本 -->
+            </dependency>
+            <dependency>
+                <groupId>com.mybatis-flex</groupId>
+                <artifactId>mybatis-flex-processor</artifactId>
+                <version>1.11.3</version>
+                <scope>provided</scope>
+            </dependency>
+            <!-- MyBatis-Flex 代码生成器 -->
+            <dependency>
+                <groupId>com.mybatis-flex</groupId>
+                <artifactId>mybatis-flex-codegen</artifactId>
+                <version>1.11.5</version>
+            </dependency>
+            <!-- MyBatis-Flex 代码生成器需要       -->
+            <dependency>
+                <groupId>com.zaxxer</groupId>
+                <artifactId>HikariCP</artifactId>
+                <version>4.0.3</version>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-mapstruct-binding</artifactId>
+                <version>0.2.0</version>
+                <scope>provided</scope>
+            </dependency>
+
+
+        </dependencies>
+    </dependencyManagement>
+
+<!--    <dependencies>-->
+
+<!--        &lt;!&ndash;        docker操控&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.github.docker-java</groupId>-->
+<!--            <artifactId>docker-java-core</artifactId>-->
+<!--            <version>3.3.6</version>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>com.github.docker-java</groupId>-->
+<!--            <artifactId>docker-java-transport-httpclient5</artifactId>-->
+<!--            <version>3.3.6</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.github.mwiede.dockerjava</groupId>-->
+<!--            <artifactId>docker-java-transport-jsch</artifactId>-->
+<!--            <version>1.4</version>-->
+<!--        </dependency>-->
+<!--&lt;!&ndash;        docker操控&ndash;&gt;-->
+<!--&lt;!&ndash;        监控&ndash;&gt;-->
+<!--&lt;!&ndash;        <dependency>&ndash;&gt;-->
+<!--&lt;!&ndash;            <groupId>io.opentelemetry</groupId>&ndash;&gt;-->
+<!--&lt;!&ndash;            <artifactId>opentelemetry-exporter-sender-okhttp</artifactId>&ndash;&gt;-->
+<!--&lt;!&ndash;            <version>1.38.0</version> </dependency>&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.langfuse</groupId>-->
+<!--            <artifactId>langfuse-java</artifactId>-->
+<!--            <version>0.1.2</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.squareup.okhttp3</groupId>-->
+<!--            <artifactId>okhttp</artifactId>-->
+<!--            <version>4.12.0</version> </dependency>-->
+<!--&lt;!&ndash;        <dependency>&ndash;&gt;-->
+<!--&lt;!&ndash;            <groupId>io.opentelemetry.instrumentation</groupId>&ndash;&gt;-->
+<!--&lt;!&ndash;            <artifactId>opentelemetry-spring-boot-starter</artifactId>&ndash;&gt;-->
+<!--&lt;!&ndash;        </dependency>&ndash;&gt;-->
+<!--        &lt;!&ndash; Spring Boot Actuator for observability support &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-actuator</artifactId>-->
+<!--        </dependency>-->
+<!--&lt;!&ndash;        &lt;!&ndash; Micrometer Observation -> OpenTelemetry bridge &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;        <dependency>&ndash;&gt;-->
+<!--&lt;!&ndash;            <groupId>io.micrometer</groupId>&ndash;&gt;-->
+<!--&lt;!&ndash;            <artifactId>micrometer-tracing-bridge-otel</artifactId>&ndash;&gt;-->
+<!--&lt;!&ndash;        </dependency>&ndash;&gt;-->
+<!--        &lt;!&ndash; Studio &ndash;&gt;-->
+<!--&lt;!&ndash;        <dependency>&ndash;&gt;-->
+<!--&lt;!&ndash;            <groupId>com.squareup.okhttp3</groupId>&ndash;&gt;-->
+<!--&lt;!&ndash;            <artifactId>okhttp</artifactId>&ndash;&gt;-->
+<!--&lt;!&ndash;        </dependency>&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>io.socket</groupId>-->
+<!--            <artifactId>socket.io-client</artifactId>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>io.opentelemetry</groupId>-->
+<!--            <artifactId>opentelemetry-exporter-otlp</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>io.opentelemetry.instrumentation</groupId>-->
+<!--            <artifactId>opentelemetry-reactor-3.1</artifactId>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash; Studio &ndash;&gt;-->
+
+<!--&lt;!&ndash;        监控&ndash;&gt;-->
+
+<!--&lt;!&ndash;        mapstruct&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>io.github.linpeilie</groupId>-->
+<!--            <artifactId>mapstruct-plus-spring-boot-starter</artifactId>-->
+<!--            <version>1.5.0</version>-->
+<!--        </dependency>-->
+<!--&lt;!&ndash;        mapstruct&ndash;&gt;-->
+
+<!--&lt;!&ndash;        多数据库访问&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.baomidou</groupId>-->
+<!--            <artifactId>dynamic-datasource-spring-boot3-starter</artifactId>-->
+<!--            <version>4.3.1</version>-->
+<!--        </dependency>-->
+<!--&lt;!&ndash;        多数据库访问&ndash;&gt;-->
+
+<!--        &lt;!&ndash;        文件解析,数据提取&ndash;&gt;-->
+<!--        &lt;!&ndash; Tika 核心包（基础格式解析） &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.tika</groupId>-->
+<!--            <artifactId>tika-core</artifactId>-->
+<!--            <version>3.2.2</version> &lt;!&ndash; 推荐使用 Maven 仓库最新稳定版 &ndash;&gt;-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash; Tika 扩展包（Office、PDF 等复杂格式解析） &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.tika</groupId>-->
+<!--            <artifactId>tika-parsers-standard-package</artifactId>-->
+<!--            <version>2.9.0</version>-->
+<!--            <type>pom</type>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash;        &lt;!&ndash; Tika OCR 扩展 &ndash;&gt;&ndash;&gt;-->
+<!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.tika/tika-parsers &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.tika</groupId>-->
+<!--            <artifactId>tika-parsers</artifactId>-->
+<!--            <version>2.9.0</version>-->
+<!--            <type>pom</type>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash; Tesseract Java 客户端 &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>net.sourceforge.tess4j</groupId>-->
+<!--            <artifactId>tess4j</artifactId>-->
+<!--            <version>5.8.0</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.jsoup</groupId>-->
+<!--            <artifactId>jsoup</artifactId>-->
+<!--            <version>1.17.2</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.poi</groupId>-->
+<!--            <artifactId>poi-ooxml</artifactId>-->
+<!--            <version>5.4.0</version> &lt;!&ndash; 或使用你们项目兼容的版本 &ndash;&gt;-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash;        文件解析,数据提取&ndash;&gt;-->
+
+<!--        &lt;!&ndash;        java调用模型&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.microsoft.onnxruntime</groupId>-->
+<!--            <artifactId>onnxruntime</artifactId>-->
+<!--            <version>1.17.0</version>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.apdplat/word &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.hankcs</groupId>-->
+<!--            <artifactId>hanlp</artifactId>-->
+<!--            <version>portable-1.8.6</version>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash;        java调用模型&ndash;&gt;-->
+
+<!--        <dependency>-->
+<!--            <groupId>ai.djl.huggingface</groupId>-->
+<!--            <artifactId>tokenizers</artifactId>-->
+<!--            <version>0.32.0</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter</artifactId>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>org.projectlombok</groupId>-->
+<!--            <artifactId>lombok</artifactId>-->
+<!--            <optional>true</optional>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.google.guava</groupId>-->
+<!--            <artifactId>guava</artifactId>-->
+<!--            <version>33.4.0-jre</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-test</artifactId>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
+
+<!--&lt;!&ndash;        Agent接入&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>io.agentscope</groupId>-->
+<!--            <artifactId>agentscope-spring-boot-starter</artifactId>-->
+<!--            <version>1.0.8</version>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash;        agui&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>io.agentscope</groupId>-->
+<!--            <artifactId>agentscope-agui-spring-boot-starter</artifactId>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-webflux</artifactId>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash;        agui&ndash;&gt;-->
+<!--&lt;!&ndash;        embdeing&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.alibaba</groupId>-->
+<!--            <artifactId>dashscope-sdk-java</artifactId>-->
+<!--            <version>2.22.6</version>-->
+<!--        </dependency>-->
+<!--&lt;!&ndash;        embdeing&ndash;&gt;-->
+
+
+
+
+
+<!--        &lt;!&ndash;        Agent接入&ndash;&gt;-->
+
+
+
+<!--&lt;!&ndash;        数据库&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>redis.clients</groupId>-->
+<!--            <artifactId>jedis</artifactId>-->
+<!--            <version>5.2.0</version>-->
+<!--        </dependency>-->
+
+<!--        &lt;!&ndash; PostgreSQL 官方驱动 &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.postgresql</groupId>-->
+<!--            <artifactId>postgresql</artifactId>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash; PostgreSQL 官方驱动 &ndash;&gt;-->
+<!--&lt;!&ndash;        数据库&ndash;&gt;-->
+
+<!--&lt;!&ndash;        validation&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-validation</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-web</artifactId>-->
+<!--        </dependency>-->
+<!--&lt;!&ndash;        validation&ndash;&gt;-->
+<!--        &lt;!&ndash; JetCache 核心依赖 &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.alicp.jetcache</groupId>-->
+<!--            <artifactId>jetcache-starter-redis-lettuce</artifactId>-->
+<!--            <version>2.7.5</version>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash; JetCache 核心依赖 &ndash;&gt;-->
+<!--        &lt;!&ndash;       Disruptor 核心库 &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.lmax</groupId>-->
+<!--            <artifactId>disruptor</artifactId>-->
+<!--            <version>3.4.4</version>-->
+
+<!--        </dependency>-->
+<!--        &lt;!&ndash;       Disruptor 核心库 &ndash;&gt;-->
+<!--        &lt;!&ndash;        Hutool&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>cn.hutool</groupId>-->
+<!--            <artifactId>hutool-all</artifactId>-->
+<!--            <version>5.8.20</version> &lt;!&ndash; 请根据需要使用最新版本 &ndash;&gt;-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash;        Hutool&ndash;&gt;-->
+
+
+<!--        &lt;!&ndash;        图数据库&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-data-neo4j</artifactId>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash;        Milvus向量数据库&ndash;&gt;-->
+
+<!--        <dependency>-->
+<!--            <groupId>io.milvus</groupId>-->
+<!--            <artifactId>milvus-sdk-java</artifactId>-->
+<!--            <version>2.6.5</version>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash;        Milvus向量数据库&ndash;&gt;-->
+<!--&lt;!&ndash;        AI数据库&ndash;&gt;-->
+
+<!--&lt;!&ndash;        JSON序列化&ndash;&gt;-->
+<!--        &lt;!&ndash; fastjson2 &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.alibaba.fastjson2</groupId>-->
+<!--            <artifactId>fastjson2</artifactId>-->
+<!--            <version>2.0.40</version>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash; fastjson2 &ndash;&gt;-->
+<!--&lt;!&ndash;        JSON序列化&ndash;&gt;-->
+
+<!--        &lt;!&ndash;        状态机statemachine&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.statemachine</groupId>-->
+<!--            <artifactId>spring-statemachine-core</artifactId>-->
+<!--            <version>4.0.0</version>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash;        状态机statemachine&ndash;&gt;-->
+
+<!--        &lt;!&ndash;        mybatis-flex&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.mybatis-flex</groupId>-->
+<!--            <artifactId>mybatis-flex-spring-boot3-starter</artifactId>-->
+<!--            <version>1.11.3</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.mybatis-flex</groupId>-->
+<!--            <artifactId>mybatis-flex-annotation</artifactId>-->
+<!--            <version>1.11.3</version>  &lt;!&ndash; 使用你项目中对应的版本 &ndash;&gt;-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.mybatis-flex</groupId>-->
+<!--            <artifactId>mybatis-flex-processor</artifactId>-->
+<!--            <version>1.11.3</version>-->
+<!--            <scope>provided</scope>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash; MyBatis-Flex 代码生成器 &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.mybatis-flex</groupId>-->
+<!--            <artifactId>mybatis-flex-codegen</artifactId>-->
+<!--            <version>1.11.5</version>-->
+<!--        </dependency>-->
+<!--        &lt;!&ndash; MyBatis-Flex 代码生成器需要       &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.zaxxer</groupId>-->
+<!--            <artifactId>HikariCP</artifactId>-->
+<!--            <version>4.0.3</version>-->
+<!--        </dependency>-->
+
+<!--        &lt;!&ndash;        mybatis-flex&ndash;&gt;-->
+
+<!--&lt;!&ndash;        MCP服务&ndash;&gt;-->
+
+<!--&lt;!&ndash;        <dependency>&ndash;&gt;-->
+<!--&lt;!&ndash;            <groupId>org.springframework.ai</groupId>&ndash;&gt;-->
+<!--&lt;!&ndash;            <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>&ndash;&gt;-->
+<!--&lt;!&ndash;        </dependency>&ndash;&gt;-->
+
+
+<!--&lt;!&ndash;        MCP服务&ndash;&gt;-->
+
+
+<!--    </dependencies>-->
+
+
+
+</project>

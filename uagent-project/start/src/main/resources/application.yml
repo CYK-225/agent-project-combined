@@ -1,0 +1,24 @@
+spring:
+  profiles:
+    active: ${ENV:test}
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.neo4j.Neo4jAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.neo4j.Neo4jRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.neo4j.Neo4jDataAutoConfiguration
+  neo4j:
+    enabled: false
+
+jetcache:
+  statIntervalMinutes: 15
+  areaInCacheName: false
+  local:
+    default:
+      type: linkedhashmap
+      keyConvertor: fastjson
+      limit: 100
+
+agentscope:
+  session-cache:
+    expire-after-access-minutes: 30
+    max-size: 1000

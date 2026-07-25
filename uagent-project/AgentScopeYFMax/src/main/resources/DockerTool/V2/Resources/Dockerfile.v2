@@ -1,0 +1,122 @@
+# V2 GUI代理 Dockerfile (基于国内镜像与 Chromium 优化，集成全套截图依赖)
+# 多阶段构建以优化镜像大小
+
+# 阶段1：带有GUI支持的轻量级基础镜像
+FROM python:3.10-slim AS base
+
+# 防止软件包安装时的交互式提示
+ENV DEBIAN_FRONTEND=noninteractive
+
+# --- 优化阶段 1: 替换 Debian 12 软件源为阿里云镜像 ---
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
+
+# --- 优化阶段 2: 安装系统依赖与 Chromium (一次性补全所有截图和图像底层库) ---
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # X11和显示服务
+    xvfb \
+    x11vnc \
+    fluxbox \
+    x11-utils \
+    xauth \
+    # 截图与剪贴板支持 (核心修复区)
+    gnome-screenshot \
+    scrot \
+    xclip \
+    xsel \
+    # 👇 新增：中文字体、字体管理与本地化工具
+    fonts-wqy-zenhei \
+    fonts-wqy-microhei \
+    fontconfig \
+    locales \
+    # 👆 =================================== 👆
+    # Python GUI 与图像底层依赖
+    python3-tk \
+    python3-dev \
+    libpng-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    # 浏览器替代方案
+    chromium \
+    chromium-driver \
+    # 图像处理
+    imagemagick \
+    # 网络与证书工具
+    curl \
+    wget \
+    net-tools \
+    ca-certificates \
+    novnc \
+    websockify \
+    # 进程管理
+    procps \
+    psmisc \
+    # 创建软链接，让代码里的 google-chrome 命令直接调用 chromium
+    && ln -s /usr/bin/chromium /usr/bin/google-chrome \
+    # 👇 新增：配置中文 Locale 并刷新系统字体缓存 👇
+    && sed -i 's/^# *\(zh_CN.UTF-8\)/\1/' /etc/locale.gen \
+    && locale-gen \
+    && fc-cache -fv \
+    # 清理
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# 👇 新增：设置环境变量，确保系统和 Python 环境使用中文 UTF-8 👇
+ENV LANG=zh_CN.UTF-8 \
+    LC_ALL=zh_CN.UTF-8 \
+    LANGUAGE=zh_CN.UTF-8
+
+# 创建虚拟环境
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# 升级 pip 并使用清华源
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 阶段2：应用镜像
+FROM base AS app
+
+# 设置工作目录
+WORKDIR /app
+
+# 首先复制requirements以获得更好的缓存效果
+COPY requirements.txt /app/requirements.txt
+
+# --- 优化阶段 3: Python 依赖加速 ---
+RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 复制应用代码
+COPY utils.py /app/utils.py
+COPY agent_server.py /app/agent_server.py
+
+# 创建必要的目录
+RUN mkdir -p /app/anno \
+    && mkdir -p /app/chrome_profile \
+    && mkdir -p /app/base_profile \
+    && mkdir -p /root/.fluxbox \
+    && touch /root/.Xauthority
+
+# 设置环境变量
+ENV DISPLAY=:99 \
+    DBUS_SESSION_BUS_ADDRESS=/dev/null \
+    LIBGL_ALWAYS_SOFTWARE=1 \
+    VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json \
+    ANGLE_DEFAULT_PLATFORM=swiftshader \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# 复制入口点脚本
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# 暴露默认端口（运行时将被覆盖）
+EXPOSE ${AGENT_PORT:-9001} ${VNC_PORT:-9002}
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:${AGENT_PORT:-9001}/health || exit 1
+
+# 入口点
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# 默认命令
+CMD ["python", "-u", "agent_server.py"]

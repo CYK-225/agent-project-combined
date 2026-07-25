@@ -1,0 +1,2 @@
+1.用途：根据用户的首句输入，生成标题
+2.使用者：UserSessionMappingController.createNewTitle

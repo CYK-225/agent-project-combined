@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.skillEvolver.mapper.EvolverSkillVersionMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.skillEvolver.entity.EvolverSkillVersionEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="version_id" jdbcType="VARCHAR" property="versionId"/>
+        <result column="task_id" jdbcType="VARCHAR" property="taskId"/>
+        <result column="iteration" jdbcType="INTEGER" property="iteration"/>
+        <result column="version_label" jdbcType="VARCHAR" property="versionLabel"/>
+        <result column="variant_index" jdbcType="INTEGER" property="variantIndex"/>
+        <result column="skill_markdown" jdbcType="VARCHAR" property="skillMarkdown"/>
+        <result column="pass_rate" jdbcType="DOUBLE" property="passRate"/>
+        <result column="mean_reward" jdbcType="DOUBLE" property="meanReward"/>
+        <result column="success_traces" jdbcType="VARCHAR" property="successTraces"/>
+        <result column="failure_traces" jdbcType="VARCHAR" property="failureTraces"/>
+        <result column="analysis" jdbcType="VARCHAR" property="analysis"/>
+        <result column="is_best" jdbcType="BOOLEAN" property="isBest"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`, `version_id`, `task_id`, `iteration`, `version_label`,
+        `variant_index`, `skill_markdown`, `pass_rate`, `mean_reward`,
+        `success_traces`, `failure_traces`, `analysis`, `is_best`, `created_at`
+    </sql>
+
+</mapper>

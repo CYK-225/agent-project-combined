@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.example.repository.dal.mapper.AgentTaskEntityMapper">
+
+    <!-- AI-GENERATED-START: result-map -->
+    <resultMap id="BaseResultMap" type="org.example.repository.dal.entity.AgentTaskEntity">
+        <id column="id" property="id"/>
+        <result column="agent_name" property="agentName"/>
+        <result column="task_id" property="taskId"/>
+        <result column="session_id" property="sessionId"/>
+        <result column="container_port" property="containerPort"/>
+        <result column="instruction" property="instruction"/>
+        <result column="log" property="log"/>
+        <result column="model_output" property="modelOutput"/>
+        <result column="callback_url" property="callbackUrl"/>
+        <result column="status" property="status"/>
+        <result column="error_message" property="errorMessage"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="started_at" property="startedAt"/>
+        <result column="completed_at" property="completedAt"/>
+        <result column="success" property="success"/>
+        <result column="result" property="result"/>
+        <result column="screenshot" property="screenshot"/>
+        <result column="screenshot_path" property="screenshotPath"/>
+        <result column="step" property="step"/>
+        <result column="prompts_id" property="promptsId"/>
+        <result column="prompt_type" property="promptType"/>
+        <result column="ai_callback_url" property="aiCallbackUrl"/>
+    </resultMap>
+    <!-- AI-GENERATED-END: result-map -->
+
+    <!-- AI-GENERATED-START: base-column-list -->
+    <sql id="Base_Column_List">
+        id, agent_name, task_id, session_id, container_port, instruction, log, model_output, callback_url, status, error_message, created_by, updated_by, created_at, updated_at, started_at, completed_at, success, result, screenshot, screenshot_path, step, prompts_id, prompt_type, ai_callback_url
+    </sql>
+    <!-- AI-GENERATED-END: base-column-list -->
+
+    <!-- HUMAN-AREA: custom -->
+    <!-- 在此区域添加自定义SQL -->
+    <!-- HUMAN-AREA-END: custom -->
+
+</mapper>

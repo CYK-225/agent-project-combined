@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.skillOpt.mapper.SkillOptTrainingJobMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.skillOpt.entity.SkillOptTrainingJobEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="job_id" jdbcType="VARCHAR" property="jobId"/>
+        <result column="task_description" jdbcType="VARCHAR" property="taskDescription"/>
+        <result column="initial_skill" jdbcType="VARCHAR" property="initialSkill"/>
+        <result column="train_data" jdbcType="VARCHAR" property="trainData"/>
+        <result column="val_data" jdbcType="VARCHAR" property="valData"/>
+        <result column="env_adapter_type" jdbcType="VARCHAR" property="envAdapterType"/>
+        <result column="lr_scheduler_type" jdbcType="VARCHAR" property="lrSchedulerType"/>
+        <result column="gate_type" jdbcType="VARCHAR" property="gateType"/>
+        <result column="max_epochs" jdbcType="INTEGER" property="maxEpochs"/>
+        <result column="batch_size" jdbcType="INTEGER" property="batchSize"/>
+        <result column="edit_budget_base" jdbcType="INTEGER" property="editBudgetBase"/>
+        <result column="current_epoch" jdbcType="INTEGER" property="currentEpoch"/>
+        <result column="status" jdbcType="VARCHAR" property="status"/>
+        <result column="best_skill_content" jdbcType="VARCHAR" property="bestSkillContent"/>
+        <result column="best_skill_epoch" jdbcType="INTEGER" property="bestSkillEpoch"/>
+        <result column="best_validation_score" jdbcType="DOUBLE" property="bestValidationScore"/>
+        <result column="final_meta_skill" jdbcType="VARCHAR" property="finalMetaSkill"/>
+        <result column="token_estimate" jdbcType="BIGINT" property="tokenEstimate"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+        <result column="updated_at" jdbcType="TIMESTAMP" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`, `job_id`, `task_description`, `initial_skill`, `train_data`, `val_data`,
+        `env_adapter_type`, `lr_scheduler_type`, `gate_type`,
+        `max_epochs`, `batch_size`, `edit_budget_base`, `current_epoch`,
+        `status`, `best_skill_content`, `best_skill_epoch`, `best_validation_score`,
+        `final_meta_skill`, `token_estimate`, `created_at`, `updated_at`
+    </sql>
+
+</mapper>

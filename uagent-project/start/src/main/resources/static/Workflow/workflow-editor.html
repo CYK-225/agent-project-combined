@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工作流可视化编辑器</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 顶部导航栏 */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-primary:hover {
+            background: #f0f0f0;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* 主内容区 */
+        .main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* 左侧面板 - 节点面板 */
+        .palette {
+            width: 240px;
+            background: white;
+            border-right: 1px solid #e8e8e8;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .palette h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .palette-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .palette-item:hover {
+            background: #e6f7ff;
+            border-color: #91d5ff;
+        }
+
+        .palette-item .icon {
+            font-size: 20px;
+        }
+
+        .palette-item .label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* 画布区域 */
+        .canvas-container {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+            background: #fafafa;
+            background-image: 
+                radial-gradient(circle, #d9d9d9 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .canvas {
+            position: relative;
+            width: 3000px;
+            height: 2000px;
+        }
+
+        /* 节点样式 */
+        .node {
+            position: absolute;
+            min-width: 120px;
+            background: white;
+            border: 2px solid #d9d9d9;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: move;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: box-shadow 0.2s, border-color 0.2s;
+            z-index: 10;
+        }
+
+        .node:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .node.selected {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.2);
+        }
+
+        .node.start {
+            background: #f6ffed;
+            border-color: #52c41a;
+        }
+
+        .node.end {
+            background: #fff2f0;
+            border-color: #ff4d4f;
+        }
+
+        .node.process {
+            background: #e6f7ff;
+            border-color: #1890ff;
+        }
+
+        .node.decision {
+            background: #fff7e6;
+            border-color: #fa8c16;
+        }
+
+        .node.parallel {
+            background: #f9f0ff;
+            border-color: #722ed1;
+        }
+
+        .node.subgraph {
+            background: #f6ffed;
+            border-color: #52c41a;
+            border-style: dashed;
+        }
+
+        .node-header {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .node-type {
+            font-size: 10px;
+            color: #999;
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .node-actions {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            display: none;
+        }
+
+        .node:hover .node-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .node-action-btn {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-delete {
+            background: #ff4d4f;
+            color: white;
+        }
+
+        /* 连接点 */
+        .connection-point {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border: 2px solid #d9d9d9;
+            border-radius: 50%;
+            cursor: crosshair;
+            z-index: 20;
+            transition: all 0.2s;
+        }
+
+        .connection-point:hover {
+            background: #667eea;
+            border-color: #667eea;
+            transform: scale(1.5);
+        }
+
+        .connection-point.top { top: -6px; left: 50%; transform: translateX(-50%); }
+        .connection-point.bottom { bottom: -6px; left: 50%; transform: translateX(-50%); }
+        .connection-point.left { left: -6px; top: 50%; transform: translateY(-50%); }
+        .connection-point.right { right: -6px; top: 50%; transform: translateY(-50%); }
+
+        .connection-point.top:hover { transform: translateX(-50%) scale(1.5); }
+        .connection-point.bottom:hover { transform: translateX(-50%) scale(1.5); }
+        .connection-point.left:hover { transform: translateY(-50%) scale(1.5); }
+        .connection-point.right:hover { transform: translateY(-50%) scale(1.5); }
+
+        /* SVG 边层 */
+        .edge-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .edge-layer path {
+            pointer-events: stroke;
+            cursor: pointer;
+        }
+
+        .edge-layer path:hover {
+            stroke: #667eea;
+            stroke-width: 3;
+        }
+
+        .edge-label {
+            font-size: 12px;
+            fill: #666;
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* 右侧属性面板 */
+        .properties-panel {
+            width: 300px;
+            background: white;
+            border-left: 1px solid #e8e8e8;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .properties-panel h3 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #333;
+            border-bottom: 1px solid #e8e8e8;
+            padding-bottom: 8px;
+        }
+
+        .property-group {
+            margin-bottom: 16px;
+        }
+
+        .property-group label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .property-group input,
+        .property-group textarea,
+        .property-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .property-group input:focus,
+        .property-group textarea:focus,
+        .property-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102,126,234,0.1);
+        }
+
+        .property-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        /* 提示框 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: #52c41a;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            transform: translateX(120%);
+            transition: transform 0.3s;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: #ff4d4f;
+        }
+
+        /* 弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            min-width: 400px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #999;
+        }
+
+        .empty-state .icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+        }
+
+        /* 状态栏 */
+        .status-bar {
+            background: #f5f5f5;
+            padding: 8px 16px;
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #e8e8e8;
+        }
+
+        .status-bar .info {
+            display: flex;
+            gap: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="header">
+        <h1>🎨 工作流可视化编辑器</h1>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="loadFromServer()">📂 加载</button>
+            <button class="btn btn-secondary" onclick="saveToServer()">💾 保存</button>
+            <button class="btn btn-secondary" onclick="importWorkflow()">📥 导入</button>
+            <button class="btn btn-secondary" onclick="exportWorkflow()">📤 导出</button>
+            <button class="btn btn-secondary" onclick="previewMermaid()">👁 预览</button>
+            <button class="btn btn-secondary" onclick="validateWorkflow()">✅ 验证</button>
+            <button class="btn btn-primary" onclick="generateCode()">⚡ 生成代码</button>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main">
+        <!-- 左侧面板 - 节点面板 -->
+        <div class="palette">
+            <h3>节点</h3>
+            <div class="palette-item" draggable="true" data-type="start">
+                <div class="icon">🟢</div>
+                <div class="label">开始</div>
+            </div>
+            <div class="palette-item" draggable="true" data-type="process">
+                <div class="icon">📦</div>
+                <div class="label">处理</div>
+            </div>
+            <div class="palette-item" draggable="true" data-type="decision">
+                <div class="icon">🔀</div>
+                <div class="label">决策</div>
+            </div>
+            <div class="palette-item" draggable="true" data-type="parallel">
+                <div class="icon">⚡</div>
+                <div class="label">并行</div>
+            </div>
+            <div class="palette-item" draggable="true" data-type="subgraph">
+                <div class="icon">📁</div>
+                <div class="label">子图</div>
+            </div>
+            <div class="palette-item" draggable="true" data-type="end">
+                <div class="icon">🔴</div>
+                <div class="label">结束</div>
+            </div>
+
+            <h3 style="margin-top: 24px;">模板</h3>
+            <div class="palette-item" onclick="loadTemplate('rag')">
+                <div class="icon">🔍</div>
+                <div class="label">RAG 工作流</div>
+            </div>
+            <div class="palette-item" onclick="loadTemplate('multiagent')">
+                <div class="icon">🤖</div>
+                <div class="label">多智能体</div>
+            </div>
+            <div class="palette-item" onclick="loadTemplate('approval')">
+                <div class="icon">✅</div>
+                <div class="label">审批流程</div>
+            </div>
+        </div>
+
+        <!-- 画布区域 -->
+        <div class="canvas-container" id="canvasContainer">
+            <div class="canvas" id="canvas">
+                <svg class="edge-layer" id="edgeLayer"></svg>
+                <div class="empty-state" id="emptyState">
+                    <div class="icon">🎨</div>
+                    <p>拖拽左侧节点到画布开始创建工作流</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧属性面板 -->
+        <div class="properties-panel">
+            <h3>属性配置</h3>
+            <div id="propertiesContent">
+                <p style="color: #999; text-align: center; margin-top: 40px;">
+                    选择节点查看属性
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 状态栏 -->
+    <div class="status-bar">
+        <div class="info">
+            <span>节点数: <strong id="nodeCount">0</strong></span>
+            <span>边数: <strong id="edgeCount">0</strong></span>
+        </div>
+        <div>
+            <span id="apiStatus">未连接</span>
+        </div>
+    </div>
+
+    <!-- 提示框 -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 保存弹窗 -->
+    <div class="modal-overlay" id="saveModal">
+        <div class="modal">
+            <h3>💾 保存工作流</h3>
+            <div class="property-group">
+                <label>工作流名称</label>
+                <input type="text" id="saveName" placeholder="请输入工作流名称">
+            </div>
+            <div class="property-group">
+                <label>描述</label>
+                <textarea id="saveDescription" placeholder="请输入工作流描述"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeSaveModal()">取消</button>
+                <button class="btn btn-primary" onclick="doSave()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载弹窗 -->
+    <div class="modal-overlay" id="loadModal">
+        <div class="modal">
+            <h3>📂 加载工作流</h3>
+            <div id="workflowList">
+                <p style="color: #999;">加载中...</p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeLoadModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入弹窗 -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <h3>📥 导入工作流</h3>
+            <div class="property-group">
+                <label>粘贴 JSON 数据</label>
+                <textarea id="importJson" placeholder='{"nodes": [...], "edges": [...]}'></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeImportModal()">取消</button>
+                <button class="btn btn-primary" onclick="doImport()">导入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 代码生成弹窗 -->
+    <div class="modal-overlay" id="codeModal">
+        <div class="modal" style="min-width: 600px;">
+            <h3>⚡ 生成的 Java 代码</h3>
+            <div class="property-group">
+                <label>类名</label>
+                <input type="text" id="className" value="MyWorkflow" placeholder="请输入类名">
+            </div>
+            <pre id="generatedCode" style="background: #f5f5f5; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.5;"></pre>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeCodeModal()">关闭</button>
+                <button class="btn btn-primary" onclick="copyCode()">复制代码</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 验证结果弹窗 -->
+    <div class="modal-overlay" id="validateModal">
+        <div class="modal">
+            <h3>✅ 验证结果</h3>
+            <div id="validateResult"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeValidateModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mermaid 预览弹窗 -->
+    <div class="modal-overlay" id="previewModal">
+        <div class="modal" style="min-width: 700px;">
+            <h3>👁 Mermaid 预览</h3>
+            <div id="mermaidPreview" style="background: white; padding: 20px; border-radius: 8px; overflow-x: auto;"></div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closePreview()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 全局变量 ====================
+        const API_BASE = '/api/workflows';
+        let nodes = [];
+        let edges = [];
+        let selectedNode = null;
+        let draggingNode = null;
+        let dragOffset = { x: 0, y: 0 };
+        let connectingFrom = null;
+        let nodeIdCounter = 0;
+
+        const canvas = document.getElementById('canvas');
+        const canvasContainer = document.getElementById('canvasContainer');
+
+        // ==================== 初始化 ====================
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+
+        // 检查 API 状态
+        checkApiStatus();
+
+        // ==================== API 函数 ====================
+        async function checkApiStatus() {
+            try {
+                const response = await fetch(API_BASE, { method: 'GET' });
+                if (response.ok) {
+                    document.getElementById('apiStatus').textContent = '已连接';
+                    document.getElementById('apiStatus').style.color = '#52c41a';
+                } else {
+                    document.getElementById('apiStatus').textContent = '错误';
+                    document.getElementById('apiStatus').style.color = '#ff4d4f';
+                }
+            } catch (error) {
+                document.getElementById('apiStatus').textContent = '未连接';
+                document.getElementById('apiStatus').style.color = '#ff4d4f';
+            }
+        }
+
+        async function saveToServer() {
+            document.getElementById('saveModal').classList.add('show');
+        }
+
+        function closeSaveModal() {
+            document.getElementById('saveModal').classList.remove('show');
+        }
+
+        async function doSave() {
+            const name = document.getElementById('saveName').value;
+            const description = document.getElementById('saveDescription').value;
+
+            if (!name) {
+                showToast('请输入工作流名称', 'error');
+                return;
+            }
+
+            const data = {
+                name: name,
+                description: description,
+                nodes: nodes,
+                edges: edges
+            };
+
+            try {
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showToast('工作流保存成功');
+                    closeSaveModal();
+                } else {
+                    showToast('保存工作流失败', 'error');
+                }
+            } catch (error) {
+                showToast('保存工作流出错: ' + error.message, 'error');
+            }
+        }
+
+        async function loadFromServer() {
+            document.getElementById('loadModal').classList.add('show');
+            await loadWorkflowList();
+        }
+
+        function closeLoadModal() {
+            document.getElementById('loadModal').classList.remove('show');
+        }
+
+        async function loadWorkflowList() {
+            const listDiv = document.getElementById('workflowList');
+            listDiv.innerHTML = '<p style="color: #999;">加载中...</p>';
+
+            try {
+                const response = await fetch(API_BASE);
+                const result = await response.json();
+
+                if (result.success && result.workflows && result.workflows.length > 0) {
+                    listDiv.innerHTML = result.workflows.map(wf => `
+                        <div style="padding: 12px; border: 1px solid #d9d9d9; border-radius: 8px; margin-bottom: 8px; cursor: pointer;"
+                             onclick="loadWorkflow('${wf.name}')"
+                             onmouseover="this.style.borderColor='#667eea'"
+                             onmouseout="this.style.borderColor='#d9d9d9'">
+                            <div style="font-weight: 600;">${wf.name}</div>
+                            <div style="font-size: 12px; color: #666;">${wf.description || '暂无描述'}</div>
+                            <div style="font-size: 10px; color: #999;">分组: ${wf.group}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    listDiv.innerHTML = '<p style="color: #999;">服务器上没有找到工作流</p>';
+                }
+            } catch (error) {
+                listDiv.innerHTML = '<p style="color: #ff4d4f;">加载工作流出错: ' + error.message + '</p>';
+            }
+        }
+
+        async function loadWorkflow(name) {
+            try {
+                const response = await fetch(`${API_BASE}/${name}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    // 清空当前画布
+                    clearCanvas();
+                    showToast('工作流已加载: ' + name);
+                    closeLoadModal();
+                } else {
+                    showToast('工作流未找到', 'error');
+                }
+            } catch (error) {
+                showToast('加载工作流出错: ' + error.message, 'error');
+            }
+        }
+
+        async function validateWorkflow() {
+            const data = {
+                nodes: nodes,
+                edges: edges
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/validate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                const resultDiv = document.getElementById('validateResult');
+
+                if (result.valid) {
+                    resultDiv.innerHTML = `
+                        <div style="padding: 16px; background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 8px;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">✅</div>
+                            <div style="font-weight: 600; color: #52c41a;">验证通过</div>
+                            <div style="font-size: 12px; color: #666; margin-top: 8px;">${result.message}</div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div style="padding: 16px; background: #fff2f0; border: 1px solid #ffccc7; border-radius: 8px;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">❌</div>
+                            <div style="font-weight: 600; color: #ff4d4f;">验证失败</div>
+                            <div style="font-size: 12px; color: #666; margin-top: 8px;">${result.message}</div>
+                        </div>
+                    `;
+                }
+
+                document.getElementById('validateModal').classList.add('show');
+            } catch (error) {
+                showToast('验证工作流出错: ' + error.message, 'error');
+            }
+        }
+
+        function closeValidateModal() {
+            document.getElementById('validateModal').classList.remove('show');
+        }
+
+        // ==================== 拖放功能 ====================
+        document.querySelectorAll('.palette-item[draggable]').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', item.dataset.type);
+            });
+        });
+
+        canvasContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        canvasContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const type = e.dataTransfer.getData('text/plain');
+            if (!type) return;
+
+            const rect = canvasContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left + canvasContainer.scrollLeft;
+            const y = e.clientY - rect.top + canvasContainer.scrollTop;
+
+            addNode(type, x, y);
+        });
+
+        // ==================== 节点管理 ====================
+        function addNode(type, x, y) {
+            nodeIdCounter++;
+            const node = {
+                id: `${type}_${nodeIdCounter}`,
+                type: type,
+                label: getDefaultLabel(type),
+                x: Math.round(x / 20) * 20,
+                y: Math.round(y / 20) * 20,
+                config: {}
+            };
+
+            nodes.push(node);
+            renderNode(node);
+            hideEmptyState();
+            updateStatusBar();
+            showToast(`已添加${getLabel(type)}节点`);
+        }
+
+        function getDefaultLabel(type) {
+            const labels = {
+                start: '开始',
+                end: '结束',
+                process: '处理',
+                decision: '决策',
+                parallel: '并行',
+                subgraph: '子图'
+            };
+            return labels[type] || type;
+        }
+
+        function getLabel(type) {
+            const labels = {
+                start: '开始',
+                end: '结束',
+                process: '处理',
+                decision: '决策',
+                parallel: '并行',
+                subgraph: '子图'
+            };
+            return labels[type] || type;
+        }
+
+        function renderNode(node) {
+            const el = document.createElement('div');
+            el.className = `node ${node.type}`;
+            el.id = `node-${node.id}`;
+            el.style.left = `${node.x}px`;
+            el.style.top = `${node.y}px`;
+
+            el.innerHTML = `
+                <div class="node-header">
+                    <span>${node.label}</span>
+                    <span class="node-type">${getLabel(node.type)}</span>
+                </div>
+                <div class="node-actions">
+                    <button class="node-action-btn btn-delete" onclick="deleteNode('${node.id}')">✕</button>
+                </div>
+                <div class="connection-point top" data-node="${node.id}"></div>
+                <div class="connection-point bottom" data-node="${node.id}"></div>
+                <div class="connection-point left" data-node="${node.id}"></div>
+                <div class="connection-point right" data-node="${node.id}"></div>
+            `;
+
+            // 节点拖拽
+            el.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.connection-point') || e.target.closest('.node-action-btn')) return;
+                
+                draggingNode = node;
+                const rect = el.getBoundingClientRect();
+                dragOffset.x = e.clientX - rect.left;
+                dragOffset.y = e.clientY - rect.top;
+                
+                selectNode(node);
+            });
+
+            // 连接点拖拽
+            el.querySelectorAll('.connection-point').forEach(cp => {
+                cp.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    connectingFrom = {
+                        nodeId: node.id,
+                        element: cp
+                    };
+                });
+            });
+
+            canvas.appendChild(el);
+        }
+
+        function deleteNode(nodeId) {
+            const el = document.getElementById(`node-${nodeId}`);
+            if (el) el.remove();
+            
+            nodes = nodes.filter(n => n.id !== nodeId);
+            edges = edges.filter(e => e.from !== nodeId && e.to !== nodeId);
+            
+            if (selectedNode && selectedNode.id === nodeId) {
+                selectedNode = null;
+                renderProperties();
+            }
+            
+            renderEdges();
+            updateStatusBar();
+            
+            if (nodes.length === 0) {
+                showEmptyState();
+            }
+            
+            showToast('节点已删除');
+        }
+
+        function clearCanvas() {
+            nodes.forEach(n => {
+                const el = document.getElementById(`node-${n.id}`);
+                if (el) el.remove();
+            });
+            nodes = [];
+            edges = [];
+            nodeIdCounter = 0;
+            selectedNode = null;
+            renderEdges();
+            renderProperties();
+            updateStatusBar();
+            showEmptyState();
+        }
+
+        function selectNode(node) {
+            document.querySelectorAll('.node').forEach(n => n.classList.remove('selected'));
+            const el = document.getElementById(`node-${node.id}`);
+            if (el) el.classList.add('selected');
+            selectedNode = node;
+            renderProperties();
+        }
+
+        // ==================== 鼠标事件 ====================
+        document.addEventListener('mousemove', (e) => {
+            if (draggingNode) {
+                const rect = canvasContainer.getBoundingClientRect();
+                const x = e.clientX - rect.left + canvasContainer.scrollLeft - dragOffset.x;
+                const y = e.clientY - rect.top + canvasContainer.scrollTop - dragOffset.y;
+
+                draggingNode.x = Math.round(x / 20) * 20;
+                draggingNode.y = Math.round(y / 20) * 20;
+
+                const el = document.getElementById(`node-${draggingNode.id}`);
+                if (el) {
+                    el.style.left = `${draggingNode.x}px`;
+                    el.style.top = `${draggingNode.y}px`;
+                }
+
+                renderEdges();
+            }
+
+            if (connectingFrom) {
+                renderTempEdge(e);
+            }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (connectingFrom) {
+                const target = e.target.closest('.connection-point');
+                if (target && target.dataset.node !== connectingFrom.nodeId) {
+                    addEdge(connectingFrom.nodeId, target.dataset.node);
+                }
+                connectingFrom = null;
+                clearTempEdge();
+            }
+            draggingNode = null;
+        });
+
+        // ==================== 边管理 ====================
+        function addEdge(fromId, toId, label) {
+            // 检查边是否已存在
+            if (edges.some(e => e.from === fromId && e.to === toId)) {
+                showToast('边已存在', 'warning');
+                return;
+            }
+
+            const edge = { from: fromId, to: toId, label: label || '' };
+            edges.push(edge);
+            renderEdges();
+            updateStatusBar();
+            showToast('边已添加');
+        }
+
+        function renderEdges() {
+            const svg = document.getElementById('edgeLayer');
+            svg.innerHTML = '';
+
+            edges.forEach((edge, index) => {
+                const fromNode = nodes.find(n => n.id === edge.from);
+                const toNode = nodes.find(n => n.id === edge.to);
+                if (!fromNode || !toNode) return;
+
+                const fromEl = document.getElementById(`node-${edge.from}`);
+                const toEl = document.getElementById(`node-${edge.to}`);
+                if (!fromEl || !toEl) return;
+
+                const fromRect = fromEl.getBoundingClientRect();
+                const toRect = toEl.getBoundingClientRect();
+                const canvasRect = canvas.getBoundingClientRect();
+
+                const fromX = fromNode.x + fromEl.offsetWidth / 2;
+                const fromY = fromNode.y + fromEl.offsetHeight;
+                const toX = toNode.x + toEl.offsetWidth / 2;
+                const toY = toNode.y;
+
+                const midY = (fromY + toY) / 2;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', `M ${fromX} ${fromY} C ${fromX} ${midY}, ${toX} ${midY}, ${toX} ${toY}`);
+                path.setAttribute('stroke', '#667eea');
+                path.setAttribute('stroke-width', '2');
+                path.setAttribute('fill', 'none');
+                path.setAttribute('marker-end', 'url(#arrowhead)');
+
+                path.addEventListener('click', () => {
+                    if (confirm('确定要删除这条边吗？')) {
+                        edges.splice(index, 1);
+                        renderEdges();
+                        updateStatusBar();
+                        showToast('边已删除');
+                    }
+                });
+
+                svg.appendChild(path);
+
+                // 边标签
+                if (edge.label) {
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', (fromX + toX) / 2);
+                    text.setAttribute('y', midY - 8);
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('class', 'edge-label');
+                    text.textContent = edge.label;
+                    svg.appendChild(text);
+                }
+            });
+
+            // 箭头标记
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            defs.innerHTML = `
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#667eea" />
+                </marker>
+            `;
+            svg.insertBefore(defs, svg.firstChild);
+        }
+
+        function renderTempEdge(e) {
+            clearTempEdge();
+            
+            if (!connectingFrom) return;
+
+            const fromEl = document.getElementById(`node-${connectingFrom.nodeId}`);
+            if (!fromEl) return;
+
+            const fromNode = nodes.find(n => n.id === connectingFrom.nodeId);
+            const fromX = fromNode.x + fromEl.offsetWidth / 2;
+            const fromY = fromNode.y + fromEl.offsetHeight;
+
+            const rect = canvasContainer.getBoundingClientRect();
+            const toX = e.clientX - rect.left + canvasContainer.scrollLeft;
+            const toY = e.clientY - rect.top + canvasContainer.scrollTop;
+
+            const svg = document.getElementById('edgeLayer');
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.id = 'tempEdge';
+            path.setAttribute('d', `M ${fromX} ${fromY} L ${toX} ${toY}`);
+            path.setAttribute('stroke', '#667eea');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('stroke-dasharray', '5,5');
+            path.setAttribute('fill', 'none');
+            svg.appendChild(path);
+        }
+
+        function clearTempEdge() {
+            const tempEdge = document.getElementById('tempEdge');
+            if (tempEdge) tempEdge.remove();
+        }
+
+        // ==================== 属性面板 ====================
+        function renderProperties() {
+            const content = document.getElementById('propertiesContent');
+            
+            if (!selectedNode) {
+                content.innerHTML = `
+                    <p style="color: #999; text-align: center; margin-top: 40px;">
+                        选择节点查看属性
+                    </p>
+                `;
+                return;
+            }
+
+            content.innerHTML = `
+                <div class="property-group">
+                    <label>节点 ID</label>
+                    <input type="text" value="${selectedNode.id}" disabled>
+                </div>
+                <div class="property-group">
+                    <label>节点类型</label>
+                    <input type="text" value="${getLabel(selectedNode.type)}" disabled>
+                </div>
+                <div class="property-group">
+                    <label>标签</label>
+                    <input type="text" id="nodeLabel" value="${selectedNode.label}" 
+                           onchange="updateNodeLabel('${selectedNode.id}', this.value)">
+                </div>
+                <div class="property-group">
+                    <label>X 坐标</label>
+                    <input type="number" value="${selectedNode.x}" disabled>
+                </div>
+                <div class="property-group">
+                    <label>Y 坐标</label>
+                    <input type="number" value="${selectedNode.y}" disabled>
+                </div>
+                <div class="property-group">
+                    <label>连接的边</label>
+                    <div style="font-size: 12px; color: #666;">
+                        ${getNodeEdges(selectedNode.id)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getNodeEdges(nodeId) {
+            const incoming = edges.filter(e => e.to === nodeId);
+            const outgoing = edges.filter(e => e.from === nodeId);
+            
+            let html = '';
+            if (incoming.length > 0) {
+                html += '<div>入边: ' + incoming.map(e => e.from).join(', ') + '</div>';
+            }
+            if (outgoing.length > 0) {
+                html += '<div>出边: ' + outgoing.map(e => e.to).join(', ') + '</div>';
+            }
+            if (html === '') {
+                html = '<div>暂无连接</div>';
+            }
+            return html;
+        }
+
+        function updateNodeLabel(nodeId, label) {
+            const node = nodes.find(n => n.id === nodeId);
+            if (node) {
+                node.label = label;
+                const el = document.getElementById(`node-${nodeId}`);
+                if (el) {
+                    el.querySelector('.node-header span').textContent = label;
+                }
+            }
+        }
+
+        // ==================== Mermaid 预览 ====================
+        async function previewMermaid() {
+            const mermaidCode = generateMermaidCode();
+            const previewDiv = document.getElementById('mermaidPreview');
+            
+            try {
+                const { svg } = await mermaid.render('mermaidGraph', mermaidCode);
+                previewDiv.innerHTML = svg;
+                document.getElementById('previewModal').classList.add('show');
+            } catch (error) {
+                showToast('Mermaid 渲染失败: ' + error.message, 'error');
+            }
+        }
+
+        function closePreview() {
+            document.getElementById('previewModal').classList.remove('show');
+        }
+
+        function generateMermaidCode() {
+            let code = 'graph TD\n';
+            
+            nodes.forEach(node => {
+                const id = node.id.replace(/[^a-zA-Z0-9]/g, '_');
+                const label = node.label;
+                
+                switch (node.type) {
+                    case 'start':
+                        code += `    ${id}[("${label}")]:::start\n`;
+                        break;
+                    case 'end':
+                        code += `    ${id}[{"${label}"}]:::end\n`;
+                        break;
+                    case 'decision':
+                        code += `    ${id}{{"${label}"}}:::decision\n`;
+                        break;
+                    case 'parallel':
+                        code += `    ${id}[/"${label}"\\]:::parallel\n`;
+                        break;
+                    default:
+                        code += `    ${id}["${label}"]\n`;
+                }
+            });
+
+            edges.forEach(edge => {
+                const from = edge.from.replace(/[^a-zA-Z0-9]/g, '_');
+                const to = edge.to.replace(/[^a-zA-Z0-9]/g, '_');
+                if (edge.label) {
+                    code += `    ${from} -->|${edge.label}| ${to}\n`;
+                } else {
+                    code += `    ${from} --> ${to}\n`;
+                }
+            });
+
+            code += `
+classDef start fill:#f6ffed,stroke:#52c41a
+classDef end fill:#fff2f0,stroke:#ff4d4f
+classDef decision fill:#fff7e6,stroke:#fa8c16
+classDef parallel fill:#f9f0ff,stroke:#722ed1
+`;
+            return code;
+        }
+
+        // ==================== 导入导出 ====================
+        function exportWorkflow() {
+            const data = {
+                version: '1.0',
+                nodes: nodes,
+                edges: edges
+            };
+
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'workflow.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('工作流已导出');
+        }
+
+        function importWorkflow() {
+            document.getElementById('importModal').classList.add('show');
+        }
+
+        function closeImportModal() {
+            document.getElementById('importModal').classList.remove('show');
+        }
+
+        function doImport() {
+            try {
+                const json = document.getElementById('importJson').value;
+                const data = JSON.parse(json);
+
+                // 清空画布
+                clearCanvas();
+
+                // 导入节点
+                data.nodes.forEach(node => {
+                    nodes.push(node);
+                    renderNode(node);
+                    const num = parseInt(node.id.split('_').pop());
+                    if (num > nodeIdCounter) nodeIdCounter = num;
+                });
+
+                // 导入边
+                edges = data.edges || [];
+                renderEdges();
+
+                closeImportModal();
+                hideEmptyState();
+                updateStatusBar();
+                showToast('工作流已导入');
+            } catch (e) {
+                showToast('无效的 JSON: ' + e.message, 'error');
+            }
+        }
+
+        // ==================== 代码生成 ====================
+        function generateCode() {
+            const className = document.getElementById('className').value || 'MyWorkflow';
+            const code = generateJavaCode(className);
+            document.getElementById('generatedCode').textContent = code;
+            document.getElementById('codeModal').classList.add('show');
+        }
+
+        function closeCodeModal() {
+            document.getElementById('codeModal').classList.remove('show');
+        }
+
+        function copyCode() {
+            const code = document.getElementById('generatedCode').textContent;
+            navigator.clipboard.writeText(code);
+            showToast('代码已复制到剪贴板');
+        }
+
+        function generateJavaCode(className) {
+            const processNodes = nodes.filter(n => n.type === 'process' || n.type === 'decision' || n.type === 'parallel');
+            const startNode = nodes.find(n => n.type === 'start');
+            const endNode = nodes.find(n => n.type === 'end');
+
+            let code = `package org.example.workflows.example;
+
+import com.alibaba.cloud.ai.graph.OverAllState;
+import com.alibaba.cloud.ai.graph.exception.GraphStateException;
+import org.example.graph.annotation.WorkflowDefinition;
+import org.example.graph.builder.GraphBuilder;
+import org.example.graph.builder.NodeHandle;
+import org.example.graph.core.AbstractWorkflowTemplate;
+import org.example.graph.support.state.StateKeyRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+
+/**
+ * ${className} 工作流
+ * 
+ * 由可视化编辑器自动生成
+ */
+@WorkflowDefinition(
+    name = "${className.toLowerCase()}",
+    group = "custom",
+    description = "${className} workflow"
+)
+public class ${className} extends AbstractWorkflowTemplate {
+
+    private static final Logger log = LoggerFactory.getLogger(${className}.class);
+
+`;
+
+            // 声明节点变量
+            processNodes.forEach(node => {
+                const varName = node.id.replace(/[^a-zA-Z0-9]/g, '_');
+                code += `    private NodeHandle ${varName};\n`;
+            });
+
+            code += `
+    @Override
+    protected void setupStateKeys(StateKeyRegistry registry) {
+        // 注册状态键
+`;
+
+            // 收集所有使用的状态键
+            const stateKeys = new Set();
+            stateKeys.add('input');
+            stateKeys.add('output');
+            stateKeys.add('result');
+            
+            stateKeys.forEach(key => {
+                code += `        registry.replace("${key}");\n`;
+            });
+
+            code += `    }
+
+    @Override
+    protected void setupNodes(GraphBuilder builder) throws GraphStateException {
+`;
+
+            // 添加节点
+            processNodes.forEach(node => {
+                const varName = node.id.replace(/[^a-zA-Z0-9]/g, '_');
+                const methodName = `handle${varName.charAt(0).toUpperCase() + varName.slice(1)}`;
+                code += `        ${varName} = builder.addNode("${node.id}", this::${methodName});\n`;
+            });
+
+            code += `    }
+
+    @Override
+    protected void setupEdges(GraphBuilder builder) throws GraphStateException {
+`;
+
+            // 添加边
+            if (startNode && processNodes.length > 0) {
+                const firstProcess = processNodes[0];
+                const firstVarName = firstProcess.id.replace(/[^a-zA-Z0-9]/g, '_');
+                code += `        builder.START().to(${firstVarName});\n`;
+            }
+
+            edges.forEach(edge => {
+                const fromVar = edge.from.replace(/[^a-zA-Z0-9]/g, '_');
+                const toVar = edge.to.replace(/[^a-zA-Z0-9]/g, '_');
+                
+                if (edge.from === startNode?.id) return;
+                
+                if (edge.to === endNode?.id) {
+                    code += `        ${fromVar}.to(builder.END());\n`;
+                } else {
+                    code += `        ${fromVar}.to(${toVar});\n`;
+                }
+            });
+
+            code += `    }
+
+    @Override
+    protected Map<String, Object> getInitialState() {
+        return Map.of(
+            "input", "",
+            "output", "",
+            "result", ""
+        );
+    }
+
+`;
+
+            // 生成处理方法
+            processNodes.forEach(node => {
+                const varName = node.id.replace(/[^a-zA-Z0-9]/g, '_');
+                const methodName = `handle${varName.charAt(0).toUpperCase() + varName.slice(1)}`;
+                
+                code += `    /**
+     * ${node.label} 节点处理逻辑
+     */
+    protected Map<String, Object> ${methodName}(OverAllState state) {
+        log.info("Executing ${node.label}");
+        // TODO: 实现处理逻辑
+        return Map.of("result", "processed");
+    }
+
+`;
+            });
+
+            code += `}`;
+            return code;
+        }
+
+        // ==================== 模板加载 ====================
+        function loadTemplate(name) {
+            let template = null;
+
+            switch (name) {
+                case 'rag':
+                    template = {
+                        nodes: [
+                            { id: 'start_1', type: 'start', label: '开始', x: 300, y: 50, config: {} },
+                            { id: 'process_1', type: 'process', label: '检索文档', x: 300, y: 150, config: {} },
+                            { id: 'process_2', type: 'process', label: '生成回答', x: 300, y: 250, config: {} },
+                            { id: 'decision_1', type: 'decision', label: '质量检查', x: 300, y: 350, config: {} },
+                            { id: 'process_3', type: 'process', label: '重写问题', x: 150, y: 450, config: {} },
+                            { id: 'end_1', type: 'end', label: '结束', x: 450, y: 450, config: {} }
+                        ],
+                        edges: [
+                            { from: 'start_1', to: 'process_1', label: '' },
+                            { from: 'process_1', to: 'process_2', label: '' },
+                            { from: 'process_2', to: 'decision_1', label: '' },
+                            { from: 'decision_1', to: 'end_1', label: '通过' },
+                            { from: 'decision_1', to: 'process_3', label: '不通过' },
+                            { from: 'process_3', to: 'process_1', label: '' }
+                        ]
+                    };
+                    break;
+                case 'multiagent':
+                    template = {
+                        nodes: [
+                            { id: 'start_1', type: 'start', label: '开始', x: 300, y: 50, config: {} },
+                            { id: 'process_1', type: 'process', label: '路由器', x: 300, y: 150, config: {} },
+                            { id: 'decision_1', type: 'decision', label: '分类', x: 300, y: 250, config: {} },
+                            { id: 'process_2', type: 'process', label: '销售智能体', x: 100, y: 350, config: {} },
+                            { id: 'process_3', type: 'process', label: '客服智能体', x: 300, y: 350, config: {} },
+                            { id: 'process_4', type: 'process', label: '通用智能体', x: 500, y: 350, config: {} },
+                            { id: 'end_1', type: 'end', label: '结束', x: 300, y: 500, config: {} }
+                        ],
+                        edges: [
+                            { from: 'start_1', to: 'process_1', label: '' },
+                            { from: 'process_1', to: 'decision_1', label: '' },
+                            { from: 'decision_1', to: 'process_2', label: '销售' },
+                            { from: 'decision_1', to: 'process_3', label: '客服' },
+                            { from: 'decision_1', to: 'process_4', label: '通用' },
+                            { from: 'process_2', to: 'end_1', label: '' },
+                            { from: 'process_3', to: 'end_1', label: '' },
+                            { from: 'process_4', to: 'end_1', label: '' }
+                        ]
+                    };
+                    break;
+                case 'approval':
+                    template = {
+                        nodes: [
+                            { id: 'start_1', type: 'start', label: '开始', x: 300, y: 50, config: {} },
+                            { id: 'process_1', type: 'process', label: '提交申请', x: 300, y: 150, config: {} },
+                            { id: 'process_2', type: 'process', label: '审批', x: 300, y: 250, config: {} },
+                            { id: 'decision_1', type: 'decision', label: '是否通过?', x: 300, y: 350, config: {} },
+                            { id: 'process_3', type: 'process', label: '处理', x: 150, y: 450, config: {} },
+                            { id: 'process_4', type: 'process', label: '拒绝', x: 450, y: 450, config: {} },
+                            { id: 'end_1', type: 'end', label: '结束', x: 300, y: 550, config: {} }
+                        ],
+                        edges: [
+                            { from: 'start_1', to: 'process_1', label: '' },
+                            { from: 'process_1', to: 'process_2', label: '' },
+                            { from: 'process_2', to: 'decision_1', label: '' },
+                            { from: 'decision_1', to: 'process_3', label: '通过' },
+                            { from: 'decision_1', to: 'process_4', label: '拒绝' },
+                            { from: 'process_3', to: 'end_1', label: '' },
+                            { from: 'process_4', to: 'end_1', label: '' }
+                        ]
+                    };
+                    break;
+            }
+
+            if (template) {
+                template.nodes.forEach(node => {
+                    nodes.push(node);
+                    renderNode(node);
+                    const num = parseInt(node.id.split('_').pop());
+                    if (num > nodeIdCounter) nodeIdCounter = num;
+                });
+                edges = template.edges;
+                renderEdges();
+                hideEmptyState();
+                updateStatusBar();
+                showToast(`已加载${name === 'rag' ? 'RAG' : name === 'multiagent' ? '多智能体' : '审批'}模板`);
+            }
+        }
+
+        // ==================== 工具函数 ====================
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show';
+            if (type === 'error') {
+                toast.classList.add('error');
+            } else if (type === 'warning') {
+                toast.style.background = '#faad14';
+            } else {
+                toast.style.background = '#52c41a';
+            }
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function hideEmptyState() {
+            const el = document.getElementById('emptyState');
+            if (el) el.style.display = 'none';
+        }
+
+        function showEmptyState() {
+            const el = document.getElementById('emptyState');
+            if (el) el.style.display = 'block';
+        }
+
+        function updateStatusBar() {
+            document.getElementById('nodeCount').textContent = nodes.length;
+            document.getElementById('edgeCount').textContent = edges.length;
+        }
+
+        // ==================== 键盘快捷键 ====================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Delete' && selectedNode) {
+                deleteNode(selectedNode.id);
+            }
+            if (e.key === 'Escape') {
+                closePreview();
+                closeImportModal();
+                closeCodeModal();
+                closeSaveModal();
+                closeLoadModal();
+                closeValidateModal();
+            }
+        });
+    </script>
+</body>
+</html>

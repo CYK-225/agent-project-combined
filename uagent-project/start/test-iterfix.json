@@ -1,0 +1,7 @@
+{
+  "instruction": "创建一个简单的 Python 计算器模块 calc.py，实现 add 和 multiply 函数，并写 test_calc.py 用 pytest 测试",
+  "taskData": "",
+  "verifier": "{\"exitCodeMustBe\":0,\"fileExists\":[\"calc.py\",\"test_calc.py\"],\"stdoutContains\":[\"passed\"]}",
+  "maxIterations": 2,
+  "nExploration": 4
+}

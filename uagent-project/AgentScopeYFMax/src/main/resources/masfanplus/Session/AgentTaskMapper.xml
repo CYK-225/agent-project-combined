@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.repository.dal.mapper.AgentTaskMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.repository.dal.entity.AgentTaskEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="agent_name" jdbcType="VARCHAR" property="agentName"/>
+        <result column="task_id" jdbcType="VARCHAR" property="taskId"/>
+        <result column="session_id" jdbcType="VARCHAR" property="sessionId"/>
+        <result column="instruction" jdbcType="CLOB" property="instruction"/>
+        <result column="prompts_id" jdbcType="VARCHAR" property="promptsId"/>
+        <result column="prompt_type" jdbcType="VARCHAR" property="promptType"/>
+        <result column="callback_url" jdbcType="VARCHAR" property="callbackUrl"/>
+        <result column="ai_callback_url" jdbcType="VARCHAR" property="aiCallbackUrl"/>
+        <result column="status" jdbcType="VARCHAR" property="status"/>
+        <result column="error_message" jdbcType="CLOB" property="errorMessage"/>
+        <result column="created_by" jdbcType="VARCHAR" property="createdBy"/>
+        <result column="updated_by" jdbcType="VARCHAR" property="updatedBy"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+        <result column="updated_at" jdbcType="TIMESTAMP" property="updatedAt"/>
+        <result column="started_at" jdbcType="TIMESTAMP" property="startedAt"/>
+        <result column="completed_at" jdbcType="TIMESTAMP" property="completedAt"/>
+        <result column="success" jdbcType="BOOLEAN" property="success"/>
+        <result column="result" jdbcType="CLOB" property="result"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, agent_name, task_id, session_id, instruction, prompts_id, prompt_type,
+        callback_url, ai_callback_url, status, error_message, created_by, updated_by, created_at, updated_at,
+        started_at, completed_at, success, result
+    </sql>
+
+</mapper>

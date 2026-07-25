@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.sliders.mapper.SlidersSchemaMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.sliders.entity.SlidersSchemaEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="task_id" jdbcType="VARCHAR" property="taskId"/>
+        <result column="schema_version" jdbcType="INTEGER" property="schemaVersion"/>
+        <result column="schema_json" jdbcType="VARCHAR" property="schemaJson"/>
+        <result column="reasoning" jdbcType="VARCHAR" property="reasoning"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`, `task_id`, `schema_version`, `schema_json`,
+        `reasoning`, `created_at`
+    </sql>
+
+</mapper>

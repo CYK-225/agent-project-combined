@@ -1,0 +1,24 @@
+# V2 代理服务器依赖
+# GUI自动化代理的核心依赖
+
+# Web框架
+flask>=2.3.0
+flask-cors>=4.0.0
+
+# 用于回调的HTTP客户端
+requests>=2.31.0
+
+# OpenAI API客户端
+openai>=1.0.0
+
+# GUI自动化
+pyautogui>=0.9.54
+pyperclip>=1.8.2
+Pillow>=10.0.0
+
+# 科学计算
+numpy>=1.24.0
+
+# 可选：用于更好的性能
+gunicorn>=21.0.0
+gevent>=23.0.0

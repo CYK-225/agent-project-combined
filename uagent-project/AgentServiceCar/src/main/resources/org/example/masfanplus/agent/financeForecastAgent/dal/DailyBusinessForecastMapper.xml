@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.agent.financeForecastAgent.dal.mapper.DailyBusinessForecastMapper">
+    <resultMap id="BaseResultMap" type="org.example.agent.financeForecastAgent.dal.entity.DailyBusinessForecastEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="company_person" jdbcType="INTEGER" property="companyPerson"/>
+        <result column="dining_person" jdbcType="INTEGER" property="diningPerson"/>
+        <result column="unit_price" jdbcType="NUMERIC" property="unitPrice"/>
+        <result column="dish_name" jdbcType="VARCHAR" property="dishName"/>
+        <result column="dish_type" jdbcType="VARCHAR" property="dishType"/>
+        <result column="consumption_weight" jdbcType="NUMERIC" property="consumptionWeight"/>
+        <result column="waste_weight" jdbcType="NUMERIC" property="wasteWeight"/>
+        <result column="delivery_weight" jdbcType="NUMERIC" property="deliveryWeight"/>
+        <result column="forecast_date" jdbcType="DATE" property="forecastDate"/>
+        <result column="create_by" jdbcType="VARCHAR" property="createBy"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_by" jdbcType="VARCHAR" property="updateBy"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id, company_person, dining_person, unit_price, dish_name, dish_type, consumption_weight, waste_weight,
+        delivery_weight, forecast_date, create_by, create_time, update_by, update_time
+    </sql>
+
+</mapper>

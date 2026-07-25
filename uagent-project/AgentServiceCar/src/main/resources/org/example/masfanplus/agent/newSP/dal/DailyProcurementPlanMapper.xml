@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.agent.newSP.dal.mapper.DailyProcurementPlanMapper">
+    <resultMap id="BaseResultMap" type="org.example.agent.Sp.dal.entity.DailyProcurementPlanEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="dish_id" jdbcType="BIGINT" property="dishId"/>
+        <result column="dish_name" jdbcType="VARCHAR" property="dishName"/>
+        <result column="procurement_weight" jdbcType="NUMERIC" property="procurementWeight"/>
+        <result column="actual_delivered" jdbcType="NUMERIC" property="actualDelivered"/>
+        <result column="actual_loss" jdbcType="NUMERIC" property="actualLoss"/>
+        <result column="actual_consumed" jdbcType="NUMERIC" property="actualConsumed"/>
+        <result column="delivery_consumption_rate" jdbcType="NUMERIC" property="deliveryConsumptionRate"/>
+        <result column="procurement_consumption_rate" jdbcType="NUMERIC" property="procurementConsumptionRate"/>
+        <result column="headcount" jdbcType="INTEGER" property="headcount"/>
+        <result column="per_capita_consumption" jdbcType="NUMERIC" property="perCapitaConsumption"/>
+        <result column="remarks" jdbcType="CLOB" property="remarks"/>
+        <result column="plan_date" jdbcType="DATE" property="planDate"/>
+        <result column="create_by" jdbcType="VARCHAR" property="createBy"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_by" jdbcType="VARCHAR" property="updateBy"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id, dish_id, dish_name, procurement_weight, actual_delivered, actual_loss, actual_consumed,
+        delivery_consumption_rate, procurement_consumption_rate, headcount, per_capita_consumption, remarks,
+        plan_date, create_by, create_time, update_by, update_time
+    </sql>
+
+</mapper>

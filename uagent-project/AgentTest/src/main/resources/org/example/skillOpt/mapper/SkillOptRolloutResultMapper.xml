@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.skillOpt.mapper.SkillOptRolloutResultMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.skillOpt.entity.SkillOptRolloutResultEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="job_id" jdbcType="VARCHAR" property="jobId"/>
+        <result column="epoch" jdbcType="INTEGER" property="epoch"/>
+        <result column="variant_index" jdbcType="INTEGER" property="variantIndex"/>
+        <result column="rollout_type" jdbcType="VARCHAR" property="rolloutType"/>
+        <result column="task_instance" jdbcType="VARCHAR" property="taskInstance"/>
+        <result column="status" jdbcType="VARCHAR" property="status"/>
+        <result column="hard_score" jdbcType="DOUBLE" property="hardScore"/>
+        <result column="soft_score" jdbcType="DOUBLE" property="softScore"/>
+        <result column="trajectory" jdbcType="VARCHAR" property="trajectory"/>
+        <result column="agent_response" jdbcType="VARCHAR" property="agentResponse"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`, `job_id`, `epoch`, `variant_index`, `rollout_type`, `task_instance`,
+        `status`, `hard_score`, `soft_score`, `trajectory`, `agent_response`, `created_at`
+    </sql>
+
+</mapper>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module version="4">
+  <component name="AdditionalModuleElements">
+    <content url="file://$MODULE_DIR$" dumb="true">
+      <sourceFolder url="file://$MODULE_DIR$/target/generated-sources/annotations" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/src/main/java/org/example/agent/oldSP" />
+      <excludeFolder url="file://$MODULE_DIR$/src/main/java/org/example/agent/supplyPlanAgent" />
+      <excludeFolder url="file://$MODULE_DIR$/src/main/java/org/example/agent/supplyPlanAgent/dal" />
+      <excludeFolder url="file://$MODULE_DIR$/src/main/resources/org/example/masfanplus/agent/supplyPlanAgent" />
+      <excludeFolder url="file://$MODULE_DIR$/src/main/java/org/example/agent/Sp/tool/Dish" />
+    </content>
+  </component>
+</module>

@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>豆腐脑甜咸大战 - 千古之争</title>
+<style>
+/* ==================== RESET & BASE ==================== */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;
+  --bg2:#12121a;
+  --text:#f0e6d3;
+  --sweet-main:#ff4d8f;
+  --sweet-glow:#ff6ba8;
+  --sweet-dark:#cc0052;
+  --sweet-bg:rgba(255,77,143,.08);
+  --salty-main:#00e676;
+  --salty-glow:#69f0ae;
+  --salty-dark:#00a152;
+  --salty-bg:rgba(0,230,118,.08);
+  --gold:#ffd740;
+  --tofu:#f5e6c8;
+  --radius:16px;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  overflow-x:hidden;line-height:1.6;
+}
+::selection{background:rgba(255,77,143,.35)}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:linear-gradient(var(--sweet-main),var(--salty-main));border-radius:3px}
+
+/* ==================== PARTICLE CANVAS ==================== */
+#particleCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+
+/* ==================== CURSOR TRAIL ==================== */
+.cursor-dot{position:fixed;width:8px;height:8px;border-radius:50%;pointer-events:none;z-index:9999;transition:opacity .3s}
+
+/* ==================== HERO ==================== */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+  position:relative;overflow:hidden;padding:2rem;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 30% 20%,rgba(255,77,143,.12) 0%,transparent 50%),
+             radial-gradient(ellipse at 70% 80%,rgba(0,230,118,.12) 0%,transparent 50%),
+             radial-gradient(ellipse at 50% 50%,rgba(255,215,64,.05) 0%,transparent 60%);
+  animation:bgPulse 8s ease-in-out infinite alternate;
+}
+@keyframes bgPulse{
+  0%{opacity:.6;transform:scale(1)}
+  100%{opacity:1;transform:scale(1.05)}
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.5rem 1.2rem;border-radius:999px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  backdrop-filter:blur(10px);font-size:.85rem;color:var(--gold);
+  margin-bottom:1.5rem;position:relative;z-index:1;
+  animation:fadeInDown .8s ease-out;
+}
+.hero-badge::before{content:'⚔️';font-size:1rem}
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+
+.hero-title{
+  font-size:clamp(2.5rem,8vw,5.5rem);font-weight:900;
+  line-height:1.1;position:relative;z-index:1;
+  animation:fadeInUp 1s ease-out .2s both;
+}
+.hero-title .sweet-text{
+  background:linear-gradient(135deg,var(--sweet-main),var(--sweet-glow),#ffa0c0);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;filter:drop-shadow(0 0 30px rgba(255,77,143,.4));
+}
+.hero-title .vs-text{
+  display:inline-block;margin:0 .3em;
+  background:linear-gradient(135deg,var(--gold),#fff,var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:vsPulse 2s ease-in-out infinite;font-size:.7em;
+}
+@keyframes vsPulse{0%,100%{transform:scale(1) rotate(-2deg)}50%{transform:scale(1.15) rotate(2deg)}}
+.hero-title .salty-text{
+  background:linear-gradient(135deg,var(--salty-main),var(--salty-glow),#a0ffd0);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;filter:drop-shadow(0 0 30px rgba(0,230,118,.4));
+}
+
+.hero-subtitle{
+  font-size:clamp(1rem,2.5vw,1.4rem);color:rgba(240,230,211,.6);
+  max-width:600px;margin:1.5rem auto 2.5rem;position:relative;z-index:1;
+  animation:fadeInUp 1s ease-out .4s both;
+}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+.hero-cta{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;position:relative;z-index:1;animation:fadeInUp 1s ease-out .6s both}
+
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.85rem 2rem;border-radius:999px;font-size:1.1rem;
+  font-weight:700;border:none;cursor:pointer;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  position:relative;overflow:hidden;text-decoration:none;
+}
+.btn::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(rgba(255,255,255,.15),transparent);
+  opacity:0;transition:opacity .3s;
+}
+.btn:hover::after{opacity:1}
+.btn:active{transform:scale(.95)}
+
+.btn-sweet{
+  background:linear-gradient(135deg,var(--sweet-main),var(--sweet-dark));
+  color:#fff;box-shadow:0 4px 25px rgba(255,77,143,.4);
+}
+.btn-sweet:hover{box-shadow:0 8px 40px rgba(255,77,143,.6);transform:translateY(-2px)}
+
+.btn-salty{
+  background:linear-gradient(135deg,var(--salty-main),var(--salty-dark));
+  color:#0a0a0f;box-shadow:0 4px 25px rgba(0,230,118,.4);
+}
+.btn-salty:hover{box-shadow:0 8px 40px rgba(0,230,118,.6);transform:translateY(-2px)}
+
+.btn-ghost{
+  background:rgba(255,255,255,.06);color:var(--text);
+  border:1px solid rgba(255,255,255,.15);
+}
+.btn-ghost:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3)}
+
+/* Floating emojis */
+.float-emoji{
+  position:absolute;font-size:3rem;opacity:.15;
+  animation:floatAround 15s ease-in-out infinite;
+  pointer-events:none;z-index:0;
+}
+@keyframes floatAround{
+  0%,100%{transform:translate(0,0) rotate(0deg)}
+  25%{transform:translate(30px,-40px) rotate(90deg)}
+  50%{transform:translate(-20px,-60px) rotate(180deg)}
+  75%{transform:translate(40px,-20px) rotate(270deg)}
+}
+
+/* ==================== SECTION COMMON ==================== */
+.section{padding:6rem 1.5rem;position:relative}
+.section-title{
+  font-size:clamp(2rem,5vw,3rem);font-weight:800;text-align:center;
+  margin-bottom:1rem;
+}
+.section-desc{
+  text-align:center;color:rgba(240,230,211,.5);
+  max-width:600px;margin:0 auto 3rem;font-size:1.05rem;
+}
+.container{max-width:1100px;margin:0 auto}
+
+/* ==================== VS BATTLE CARDS ==================== */
+.battle-grid{
+  display:grid;grid-template-columns:1fr auto 1fr;gap:2rem;
+  align-items:center;
+}
+@media(max-width:768px){
+  .battle-grid{grid-template-columns:1fr;gap:1.5rem}
+  .battle-vs{font-size:2.5rem!important}
+}
+
+.battle-card{
+  border-radius:var(--radius);padding:2.5rem 2rem;
+  position:relative;overflow:hidden;
+  transition:all .4s cubic-bezier(.4,0,.2,1);
+  cursor:default;
+}
+.battle-card::before{
+  content:'';position:absolute;inset:0;opacity:0;
+  transition:opacity .4s;border-radius:var(--radius);
+}
+.battle-card:hover{transform:translateY(-6px) scale(1.01)}
+.battle-card:hover::before{opacity:1}
+
+.battle-card.sweet{
+  background:linear-gradient(145deg,rgba(255,77,143,.08),rgba(255,77,143,.02));
+  border:1px solid rgba(255,77,143,.15);
+}
+.battle-card.sweet::before{
+  background:radial-gradient(ellipse at top left,rgba(255,77,143,.1),transparent 70%);
+}
+.battle-card.sweet:hover{box-shadow:0 20px 60px rgba(255,77,143,.15);border-color:rgba(255,77,143,.35)}
+
+.battle-card.salty{
+  background:linear-gradient(145deg,rgba(0,230,118,.08),rgba(0,230,118,.02));
+  border:1px solid rgba(0,230,118,.15);
+}
+.battle-card.salty::before{
+  background:radial-gradient(ellipse at top right,rgba(0,230,118,.1),transparent 70%);
+}
+.battle-card.salty:hover{box-shadow:0 20px 60px rgba(0,230,118,.15);border-color:rgba(0,230,118,.35)}
+
+.battle-card-emoji{font-size:5rem;margin-bottom:1rem;display:block;text-align:center}
+.battle-card-title{font-size:1.8rem;font-weight:800;margin-bottom:.5rem;text-align:center}
+.battle-card.sweet .battle-card-title{color:var(--sweet-glow)}
+.battle-card.salty .battle-card-title{color:var(--salty-glow)}
+.battle-card-desc{color:rgba(240,230,211,.6);text-align:center;margin-bottom:1.5rem;font-size:.95rem}
+
+.battle-card-tags{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-bottom:2rem}
+.tag{padding:.35rem .8rem;border-radius:999px;font-size:.8rem;font-weight:600}
+.sweet .tag{background:rgba(255,77,143,.12);color:var(--sweet-glow)}
+.salty .tag{background:rgba(0,230,118,.12);color:var(--salty-glow)}
+
+.vote-btn{
+  display:flex;align-items:center;justify-content:center;gap:.5rem;
+  width:100%;padding:1rem;border-radius:12px;font-size:1.1rem;
+  font-weight:700;border:none;cursor:pointer;position:relative;
+  overflow:hidden;transition:all .3s;
+}
+.vote-btn.sweet-btn{
+  background:linear-gradient(135deg,var(--sweet-main),var(--sweet-dark));
+  color:#fff;box-shadow:0 4px 20px rgba(255,77,143,.3);
+}
+.vote-btn.sweet-btn:hover{box-shadow:0 8px 35px rgba(255,77,143,.5)}
+.vote-btn.salty-btn{
+  background:linear-gradient(135deg,var(--salty-main),var(--salty-dark));
+  color:#0a0a0f;box-shadow:0 4px 20px rgba(0,230,118,.3);
+}
+.vote-btn.salty-btn:hover{box-shadow:0 8px 35px rgba(0,230,118,.5)}
+.vote-btn:active{transform:scale(.96)}
+.vote-btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+.vote-btn .ripple{
+  position:absolute;border-radius:50%;
+  background:rgba(255,255,255,.35);
+  transform:scale(0);animation:rippleEffect .6s ease-out;
+  pointer-events:none;
+}
+@keyframes rippleEffect{to{transform:scale(4);opacity:0}}
+
+.battle-vs{
+  font-size:3.5rem;font-weight:900;
+  background:linear-gradient(135deg,var(--gold),#fff,var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  text-shadow:none;user-select:none;
+}
+
+/* ==================== STATS ==================== */
+.stats-section{background:var(--bg2)}
+.stats-bar-wrap{max-width:700px;margin:0 auto 2rem}
+.stats-labels{display:flex;justify-content:space-between;margin-bottom:.5rem;font-weight:700}
+.stats-labels .sweet-label{color:var(--sweet-glow)}
+.stats-labels .salty-label{color:var(--salty-glow)}
+.stats-bar{
+  height:32px;border-radius:16px;overflow:hidden;
+  background:rgba(255,255,255,.05);position:relative;
+}
+.stats-bar-fill{
+  height:100%;display:flex;transition:width 1s cubic-bezier(.4,0,.2,1);
+  border-radius:16px;
+}
+.stats-bar-sweet{
+  background:linear-gradient(90deg,var(--sweet-dark),var(--sweet-main),var(--sweet-glow));
+  justify-content:flex-start;padding-left:1rem;color:#fff;
+  font-weight:700;font-size:.85rem;
+}
+.stats-bar-salty{
+  background:linear-gradient(90deg,var(--salty-glow),var(--salty-main),var(--salty-dark));
+  justify-content:flex-end;padding-right:1rem;color:#0a0a0f;
+  font-weight:700;font-size:.85rem;
+}
+.stats-total{
+  text-align:center;margin-top:1rem;font-size:.95rem;color:rgba(240,230,211,.5);
+}
+.stats-total span{color:var(--gold);font-weight:700;font-size:1.3rem}
+
+/* Big numbers */
+.big-numbers{display:flex;justify-content:center;gap:4rem;margin-bottom:3rem;flex-wrap:wrap}
+.big-num{text-align:center}
+.big-num-value{
+  font-size:clamp(2.5rem,6vw,4rem);font-weight:900;
+  font-variant-numeric:tabular-nums;
+}
+.big-num.sweet .big-num-value{color:var(--sweet-glow)}
+.big-num.salty .big-num-value{color:var(--salty-glow)}
+.big-num-label{font-size:.9rem;color:rgba(240,230,211,.5);margin-top:.25rem}
+
+/* ==================== FACTS ==================== */
+.facts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
+.fact-card{
+  padding:1.5rem;border-radius:var(--radius);
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.06);
+  transition:all .3s;
+}
+.fact-card:hover{
+  background:rgba(255,255,255,.06);
+  border-color:rgba(255,255,255,.12);
+  transform:translateY(-3px);
+}
+.fact-card-emoji{font-size:2rem;margin-bottom:.75rem;display:block}
+.fact-card-title{font-size:1.1rem;font-weight:700;margin-bottom:.5rem}
+.fact-card-text{color:rgba(240,230,211,.55);font-size:.9rem;line-height:1.7}
+
+/* ==================== TIMELINE ==================== */
+.timeline{position:relative;max-width:600px;margin:0 auto}
+.timeline::before{
+  content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;
+  background:linear-gradient(var(--sweet-main),var(--salty-main));
+  transform:translateX(-50%);
+}
+.timeline-item{
+  position:relative;width:50%;padding:1rem 2rem;
+}
+.timeline-item:nth-child(odd){left:0;text-align:right;padding-right:3rem}
+.timeline-item:nth-child(even){left:50%;text-align:left;padding-left:3rem}
+.timeline-item::after{
+  content:'';position:absolute;top:1.5rem;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--gold);border:3px solid var(--bg);
+  z-index:1;
+}
+.timeline-item:nth-child(odd)::after{right:-7px}
+.timeline-item:nth-child(even)::after{left:-7px}
+.timeline-era{font-size:.8rem;color:var(--gold);font-weight:600;margin-bottom:.25rem}
+.timeline-text{font-size:.9rem;color:rgba(240,230,211,.6)}
+@media(max-width:600px){
+  .timeline::before{left:20px}
+  .timeline-item,.timeline-item:nth-child(even){left:0;width:100%;text-align:left;padding-left:3rem;padding-right:0}
+  .timeline-item::after,.timeline-item:nth-child(odd)::after,.timeline-item:nth-child(even)::after{left:13px}
+}
+
+/* ==================== CTA ==================== */
+.cta-section{
+  text-align:center;padding:6rem 1.5rem;
+  background:linear-gradient(180deg,var(--bg),var(--bg2));
+}
+.cta-title{
+  font-size:clamp(2rem,5vw,3.5rem);font-weight:900;
+  margin-bottom:1rem;
+}
+.cta-subtitle{color:rgba(240,230,211,.5);margin-bottom:2.5rem;font-size:1.1rem}
+
+/* ==================== FOOTER ==================== */
+.footer{
+  text-align:center;padding:3rem 1.5rem;
+  border-top:1px solid rgba(255,255,255,.06);
+  color:rgba(240,230,211,.3);font-size:.85rem;
+}
+
+/* ==================== MODAL ==================== */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  backdrop-filter:blur(8px);z-index:1000;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+  padding:1rem;
+}
+.modal-overlay.active{opacity:1;pointer-events:all}
+.modal{
+  background:var(--bg2);border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--radius);padding:3rem 2.5rem;
+  max-width:450px;width:100%;text-align:center;
+  transform:scale(.9);transition:transform .3s;
+}
+.modal-overlay.active .modal{transform:scale(1)}
+.modal-emoji{font-size:4rem;margin-bottom:1rem;display:block}
+.modal-title{font-size:1.8rem;font-weight:800;margin-bottom:.5rem}
+.modal-text{color:rgba(240,230,211,.6);margin-bottom:2rem}
+.modal-share{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+
+/* ==================== TOAST ==================== */
+.toast{
+  position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(100px);
+  padding:.8rem 1.5rem;border-radius:999px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  backdrop-filter:blur(10px);font-size:.9rem;color:var(--text);
+  z-index:999;transition:transform .4s cubic-bezier(.4,0,.2,1);
+  pointer-events:none;white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ==================== SCROLL REVEAL ==================== */
+.reveal{opacity:0;transform:translateY(30px);transition:all .8s cubic-bezier(.4,0,.2,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* ==================== CONFETTI PIECE ==================== */
+.confetti-piece{
+  position:fixed;pointer-events:none;z-index:9998;
+  width:10px;height:10px;
+}
+</style>
+</head>
+<body>
+
+<!-- Particle background -->
+<canvas id="particleCanvas"></canvas>
+
+<!-- ==================== HERO ==================== -->
+<section class="hero" id="hero">
+  <div class="float-emoji" style="top:10%;left:5%;animation-delay:0s">🍯</div>
+  <div class="float-emoji" style="top:15%;right:8%;animation-delay:2s;font-size:2.5rem">🧂</div>
+  <div class="float-emoji" style="bottom:20%;left:10%;animation-delay:4s;font-size:2rem">🥣</div>
+  <div class="float-emoji" style="bottom:15%;right:12%;animation-delay:6s;font-size:3.5rem">🫘</div>
+  <div class="float-emoji" style="top:40%;left:3%;animation-delay:8s;font-size:2rem">🍚</div>
+  <div class="float-emoji" style="top:50%;right:4%;animation-delay:10s;font-size:2.5rem">🥢</div>
+
+  <div class="hero-badge">中华美食千年之争</div>
+  <h1 class="hero-title">
+    <span class="sweet-text">甜</span><span class="vs-text">VS</span><span class="salty-text">咸</span>
+  </h1>
+  <p class="hero-subtitle">
+    豆腐脑，这道传承千年的中华美食，究竟该是甜蜜蜜还是咸滋滋？<br>
+    是时候用你的投票来终结这场千年辩论了！
+  </p>
+  <div class="hero-cta">
+    <button class="btn btn-sweet" onclick="scrollToBattle()">🍯 加入甜党</button>
+    <button class="btn btn-salty" onclick="scrollToBattle()">🧂 加入咸党</button>
+    <button class="btn btn-ghost" onclick="scrollToSection('facts')">📖 先了解下</button>
+  </div>
+</section>
+
+<!-- ==================== BATTLE ==================== -->
+<section class="section" id="battle">
+  <div class="container">
+    <h2 class="section-title reveal">选择你的阵营</h2>
+    <p class="section-desc reveal">一票定乾坤，让你的味蕾做主！</p>
+
+    <div class="battle-grid reveal">
+      <!-- Sweet Card -->
+      <div class="battle-card sweet" id="sweetCard">
+        <span class="battle-card-emoji">🍯</span>
+        <h3 class="battle-card-title">甜 党</h3>
+        <p class="battle-card-desc">清晨一碗甜豆腐脑，是刻进DNA的幸福感</p>
+        <div class="battle-card-tags">
+          <span class="tag">糖水</span>
+          <span class="tag">红豆</span>
+          <span class="tag">芋圆</span>
+          <span class="tag">花生碎</span>
+          <span class="tag">桂花蜜</span>
+          <span class="tag">珍珠</span>
+        </div>
+        <button class="vote-btn sweet-btn" onclick="vote('sweet',event)" id="sweetBtn">
+          🍯 投票给甜党
+        </button>
+      </div>
+
+      <!-- VS -->
+      <div class="battle-vs">VS</div>
+
+      <!-- Salty Card -->
+      <div class="battle-card salty" id="saltyCard">
+        <span class="battle-card-emoji">🧂</span>
+        <h3 class="battle-card-title">咸 党</h3>
+        <p class="battle-card-desc">一碗咸香豆腐脑，是北方人的灵魂早餐</p>
+        <div class="battle-card-tags">
+          <span class="tag">酱油</span>
+          <span class="tag">醋</span>
+          <span class="tag">辣椒油</span>
+          <span class="tag">香菜</span>
+          <span class="tag">榨菜丁</span>
+          <span class="tag">韭菜花</span>
+        </div>
+        <button class="vote-btn salty-btn" onclick="vote('salty',event)" id="saltyBtn">
+          🧂 投票给咸党
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== STATS ==================== -->
+<section class="section stats-section" id="stats">
+  <div class="container">
+    <h2 class="section-title reveal">实时战况</h2>
+    <p class="section-desc reveal">全网味蕾投票实时统计</p>
+
+    <div class="big-numbers reveal">
+      <div class="big-num sweet">
+        <div class="big-num-value" id="sweetCount">0</div>
+        <div class="big-num-label">甜党票数</div>
+      </div>
+      <div class="big-num salty">
+        <div class="big-num-value" id="saltyCount">0</div>
+        <div class="big-num-label">咸党票数</div>
+      </div>
+    </div>
+
+    <div class="stats-bar-wrap reveal">
+      <div class="stats-labels">
+        <span class="sweet-label" id="sweetPct">50%</span>
+        <span class="salty-label" id="saltyPct">50%</span>
+      </div>
+      <div class="stats-bar">
+        <div class="stats-bar-fill stats-bar-sweet" id="sweetBar" style="width:50%"><span id="sweetBarText">50%</span></div>
+      </div>
+      <div class="stats-bar" style="margin-top:4px">
+        <div class="stats-bar-fill stats-bar-salty" id="saltyBar" style="width:50%"><span id="saltyBarText">50%</span></div>
+      </div>
+    </div>
+    <div class="stats-total reveal">共 <span id="totalCount">0</span> 人参与投票</div>
+  </div>
+</section>
+
+<!-- ==================== FACTS ==================== -->
+<section class="section" id="facts">
+  <div class="container">
+    <h2 class="section-title reveal">豆腐脑冷知识</h2>
+    <p class="section-desc reveal">在投票之前，先来涨涨姿势</p>
+
+    <div class="facts-grid">
+      <div class="fact-card reveal">
+        <span class="fact-card-emoji">📜</span>
+        <h4 class="fact-card-title">千年之争</h4>
+        <p class="fact-card-text">豆腐脑的甜咸之争可以追溯到宋代。有趣的是，豆腐的发明者淮南王刘安可能从未想到，他的一道美食竟能让全国人民吵上千年。</p>
+      </div>
+      <div class="fact-card reveal">
+        <span class="fact-card-emoji">🗺️</span>
+        <h4 class="fact-card-title">南北分界线</h4>
+        <p class="fact-card-text">俗话说"秦岭-淮河一线分甜咸"。北方人习惯咸口豆腐脑配油条，南方人则偏爱甜口加红糖水。不过，这条线正在被越来越多的"叛徒"打破。</p>
+      </div>
+      <div class="fact-card reveal">
+        <span class="fact-card-emoji">🧪</span>
+        <h4 class="fact-card-title">神奇的凝固</h4>
+        <p class="fact-card-text">豆腐脑的嫩滑口感来自于豆浆的凝固过程。用石膏（硫酸钙）点出的豆腐脑更嫩，用卤水（氯化镁）点出的则更有韧性。</p>
+      </div>
+      <div class="fact-card reveal">
+        <span class="fact-card-emoji">💪</span>
+        <h4 class="fact-card-title">蛋白质炸弹</h4>
+        <p class="fact-card-text">每100克豆腐脑含有约5克优质蛋白质，而且热量极低。无论是甜党还是咸党，豆腐脑都是高蛋白低热量的健康之选。</p>
+      </div>
+      <div class="fact-card reveal">
+        <span class="fact-card-emoji">🌏</span>
+        <h4 class="fact-card-title">全球亲戚</h4>
+        <p class="fact-card-text">不只中国有豆腐脑！日本的"おぼろ豆腐"、韩国的"순두부"、泰国的"เต้าฮวย"都是它的远房亲戚，各有各的吃法。</p>
+      </div>
+      <div class="fact-card reveal">
+        <span class="fact-card-emoji">🎪</span>
+        <h4 class="fact-card-title">第三种选择？</h4>
+        <p class="fact-card-text">在四川，人们发明了"麻辣豆腐脑"，既不甜也不咸，而是又麻又辣。这算不算甜咸党的"搅局者"？</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== TIMELINE ==================== -->
+<section class="section stats-section" id="timeline">
+  <div class="container">
+    <h2 class="section-title reveal">豆腐脑编年史</h2>
+    <p class="section-desc reveal">一碗豆腐脑，半部中华史</p>
+
+    <div class="timeline">
+      <div class="timeline-item reveal">
+        <div class="timeline-era">公元前164年</div>
+        <p class="timeline-text">淮南王刘安炼丹时意外发明豆腐，豆腐脑的传奇就此开始。</p>
+      </div>
+      <div class="timeline-item reveal">
+        <div class="timeline-era">宋代（960-1279）</div>
+        <p class="timeline-text">豆腐脑成为街头小吃，甜咸两派初见雏形。《东京梦华录》已有记载。</p>
+      </div>
+      <div class="timeline-item reveal">
+        <div class="timeline-era">明清时期</div>
+        <p class="timeline-text">南甜北咸的格局基本确立，豆腐脑成为平民百姓的日常美食。</p>
+      </div>
+      <div class="timeline-item reveal">
+        <div class="timeline-era">2011年</div>
+        <p class="timeline-text">微博元年，甜咸之争首次在互联网上爆发，从此成为年度保留节目。</p>
+      </div>
+      <div class="timeline-item reveal">
+        <div class="timeline-era">2026年</div>
+        <p class="timeline-text">你来到这里，用一票为这场千年之争添上浓墨重彩的一笔！</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CTA ==================== -->
+<section class="cta-section" id="cta">
+  <h2 class="cta-title reveal">还在犹豫？</h2>
+  <p class="cta-subtitle reveal">味蕾不会骗人，跟随内心投出你的一票</p>
+  <div class="reveal" style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+    <button class="btn btn-sweet" onclick="vote('sweet',event)">🍯 甜党冲鸭</button>
+    <button class="btn btn-salty" onclick="vote('salty',event)">🧂 咸党必胜</button>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="footer">
+  <p>豆腐脑甜咸大战 © 2026 — 无论甜咸，都是好豆腐脑 🥣</p>
+</footer>
+
+<!-- ==================== MODAL ==================== -->
+<div class="modal-overlay" id="voteModal" onclick="closeModal(event)">
+  <div class="modal">
+    <span class="modal-emoji" id="modalEmoji">🎉</span>
+    <h3 class="modal-title" id="modalTitle">投票成功！</h3>
+    <p class="modal-text" id="modalText">感谢你的参与，味蕾的选择永远正确！</p>
+    <div class="modal-share">
+      <button class="btn btn-ghost" onclick="shareResult()">📢 分享战绩</button>
+      <button class="btn btn-ghost" onclick="resetVote()">🔄 重新投票</button>
+      <button class="btn btn-ghost" onclick="closeModal()">👍 知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TOAST ==================== -->
+<div class="toast" id="toast"></div>
+
+<!-- ==================== SCRIPT ==================== -->
+<script>
+// ============ STATE ============
+const state = {
+  sweet: 12456,
+  salty: 12489,
+  voted: localStorage.getItem('tofu_vote') || null,
+};
+
+// ============ DOM REFS ============
+const $ = id => document.getElementById(id);
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', () => {
+  updateStats();
+  initParticles();
+  initReveal();
+  initCursorTrail();
+  if (state.voted) disableVotedBtns();
+  // Simulate live voting
+  setInterval(simulateLiveVote, 3000 + Math.random() * 5000);
+});
+
+// ============ NAVIGATION ============
+function scrollToBattle() {
+  $('battle').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function scrollToSection(id) {
+  $(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ============ VOTING ============
+function vote(side, e) {
+  if (state.voted) {
+    showToast('你已经投过票啦！每人一票哦 ✋');
+    return;
+  }
+  // Ripple
+  if (e) createRipple(e);
+  // Update
+  state[side]++;
+  state.voted = side;
+  localStorage.setItem('tofu_vote', side);
+  updateStats();
+  disableVotedBtns();
+  // Effects
+  launchConfetti(side);
+  showModal(side);
+  // Animate card
+  const card = $(side + 'Card');
+  card.style.animation = 'none';
+  card.offsetHeight; // reflow
+  card.style.animation = '';
+}
+
+function disableVotedBtns() {
+  $('sweetBtn').disabled = true;
+  $('saltyBtn').disabled = true;
+  if (state.voted === 'sweet') {
+    $('sweetBtn').innerHTML = '✅ 已投票给甜党';
+    $('saltyBtn').innerHTML = '已结束';
+  } else if (state.voted === 'salty') {
+    $('saltyBtn').innerHTML = '✅ 已投票给咸党';
+    $('sweetBtn').innerHTML = '已结束';
+  }
+  // Disable CTA buttons at bottom too
+  document.querySelectorAll('#cta .btn').forEach(btn => {
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    btn.style.cursor = 'not-allowed';
+    btn.textContent = '✅ 已投票';
+  });
+}
+
+function updateStats() {
+  const total = state.sweet + state.salty;
+  const sPct = Math.round((state.sweet / total) * 100);
+  const cPct = 100 - sPct;
+  animateNumber('sweetCount', state.sweet);
+  animateNumber('saltyCount', state.salty);
+  animateNumber('totalCount', total);
+  $('sweetPct').textContent = sPct + '%';
+  $('saltyPct').textContent = cPct + '%';
+  $('sweetBar').style.width = sPct + '%';
+  $('saltyBar').style.width = cPct + '%';
+  $('sweetBarText').textContent = sPct + '%';
+  $('saltyBarText').textContent = cPct + '%';
+}
+
+function animateNumber(id, target) {
+  const el = $(id);
+  const current = parseInt(el.textContent.replace(/,/g, '')) || 0;
+  if (current === target) return;
+  const diff = target - current;
+  const steps = 30;
+  const stepVal = diff / steps;
+  let step = 0;
+  const timer = setInterval(() => {
+    step++;
+    const val = Math.round(current + stepVal * step);
+    el.textContent = val.toLocaleString();
+    if (step >= steps) {
+      el.textContent = target.toLocaleString();
+      clearInterval(timer);
+    }
+  }, 20);
+}
+
+function simulateLiveVote() {
+  if (!state.voted) return;
+  const side = Math.random() > 0.48 ? 'sweet' : 'salty';
+  state[side]++;
+  updateStats();
+}
+
+// ============ RIPPLE ============
+function createRipple(e) {
+  const btn = e.currentTarget;
+  const rect = btn.getBoundingClientRect();
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  const size = Math.max(rect.width, rect.height) * 2;
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+  ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+}
+
+// ============ CONFETTI ============
+function launchConfetti(side) {
+  const colors = side === 'sweet'
+    ? ['#ff4d8f', '#ff6ba8', '#ffa0c0', '#ffd740', '#fff']
+    : ['#00e676', '#69f0ae', '#a0ffd0', '#ffd740', '#fff'];
+  const container = document.body;
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    const shape = Math.random() > 0.5 ? '50%' : '0';
+    const w = 6 + Math.random() * 8;
+    const h = 6 + Math.random() * 8;
+    piece.style.cssText = `
+      left:${30 + Math.random() * 40}%;top:50%;
+      width:${w}px;height:${h}px;
+      background:${colors[Math.floor(Math.random() * colors.length)]};
+      border-radius:${shape};
+      transform:rotate(${Math.random() * 360}deg);
+    `;
+    container.appendChild(piece);
+    const angle = (Math.random() - 0.5) * 120;
+    const velocity = 400 + Math.random() * 600;
+    const rotSpeed = (Math.random() - 0.5) * 720;
+    let x = 0, y = 0, rot = 0;
+    let vx = Math.sin(angle * Math.PI / 180) * velocity;
+    let vy = -Math.cos(angle * Math.PI / 180) * velocity;
+    const gravity = 800;
+    let opacity = 1;
+    const start = performance.now();
+    function animate(now) {
+      const dt = (now - start) / 1000;
+      if (dt > 2.5) { piece.remove(); return; }
+      x = vx * dt;
+      y = vy * dt + 0.5 * gravity * dt * dt;
+      rot = rotSpeed * dt;
+      opacity = Math.max(0, 1 - dt / 2);
+      piece.style.transform = `translate(${x}px,${y}px) rotate(${rot}deg)`;
+      piece.style.opacity = opacity;
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+  }
+}
+
+// ============ MODAL ============
+function showModal(side) {
+  const isSweet = side === 'sweet';
+  $('modalEmoji').textContent = isSweet ? '🍯' : '🧂';
+  $('modalTitle').textContent = isSweet ? '甜党感谢你的加入！' : '咸党欢迎你的加入！';
+  $('modalText').textContent = isSweet
+    ? '每一勺甜蜜都是对味蕾的温柔告白。转发给你的好友，一起为甜党而战！'
+    : '每一口咸香都是对传统的致敬。转发给你的好友，一起为咸党而战！';
+  $('voteModal').classList.add('active');
+}
+function closeModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  $('voteModal').classList.remove('active');
+}
+function shareResult() {
+  const total = state.sweet + state.salty;
+  const sPct = Math.round((state.sweet / total) * 100);
+  const text = `我为豆腐脑${state.voted === 'sweet' ? '甜' : '咸'}党投了一票！当前战况：甜${sPct}% vs 咸${100 - sPct}%，共${total.toLocaleString()}人参与。快来投票吧！`;
+  if (navigator.share) {
+    navigator.share({ title: '豆腐脑甜咸大战', text });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text);
+    showToast('已复制到剪贴板，去粘贴分享吧！');
+  }
+  closeModal();
+}
+function resetVote() {
+  if (!state.voted) return;
+  // Deduct the previous vote
+  state[state.voted]--;
+  state.voted = null;
+  localStorage.removeItem('tofu_vote');
+  updateStats();
+  // Re-enable vote buttons
+  $('sweetBtn').disabled = false;
+  $('sweetBtn').innerHTML = '🍯 投票给甜党';
+  $('saltyBtn').disabled = false;
+  $('saltyBtn').innerHTML = '🧂 投票给咸党';
+  // Re-enable CTA buttons at bottom
+  const ctaBtns = document.querySelectorAll('#cta .btn');
+  if (ctaBtns.length >= 2) {
+    ctaBtns[0].disabled = false;
+    ctaBtns[0].style.opacity = '';
+    ctaBtns[0].style.cursor = '';
+    ctaBtns[0].textContent = '🍯 甜党冲鸭';
+    ctaBtns[1].disabled = false;
+    ctaBtns[1].style.opacity = '';
+    ctaBtns[1].style.cursor = '';
+    ctaBtns[1].textContent = '🧂 咸党必胜';
+  }
+  closeModal();
+  showToast('已清除投票，可以重新选择啦！');
+  scrollToBattle();
+}
+
+// ============ TOAST ============
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============ SCROLL REVEAL ============
+function initReveal() {
+  const els = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15 });
+  els.forEach(el => obs.observe(el));
+}
+
+// ============ PARTICLE BG ============
+function initParticles() {
+  const canvas = $('particleCanvas');
+  const ctx = canvas.getContext('2d');
+  let w, h;
+  const particles = [];
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  for (let i = 0; i < 60; i++) {
+    particles.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 2 + 0.5,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      o: Math.random() * 0.3 + 0.1,
+      color: Math.random() > 0.5 ? '255,77,143' : '0,230,118',
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0) p.x = w;
+      if (p.x > w) p.x = 0;
+      if (p.y < 0) p.y = h;
+      if (p.y > h) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${p.color},${p.o})`;
+      ctx.fill();
+    });
+    // Draw connections
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(255,255,255,${0.03 * (1 - dist / 120)})`;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ============ CURSOR TRAIL ============
+function initCursorTrail() {
+  if (window.matchMedia('(hover: none)').matches) return;
+  const dots = [];
+  const colors = ['#ff4d8f', '#00e676', '#ffd740', '#ff6ba8', '#69f0ae'];
+  for (let i = 0; i < 8; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'cursor-dot';
+    dot.style.background = colors[i % colors.length];
+    dot.style.width = (8 - i) + 'px';
+    dot.style.height = (8 - i) + 'px';
+    dot.style.opacity = 1 - i * 0.12;
+    document.body.appendChild(dot);
+    dots.push({ el: dot, x: 0, y: 0 });
+  }
+  let mx = 0, my = 0;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  function animate() {
+    let px = mx, py = my;
+    dots.forEach(d => {
+      d.x += (px - d.x) * 0.35;
+      d.y += (py - d.y) * 0.35;
+      d.el.style.left = d.x + 'px';
+      d.el.style.top = d.y + 'px';
+      px = d.x; py = d.y;
+    });
+    requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+// ============ KEYBOARD SHORTCUT ============
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+</script>
+</body>
+</html>

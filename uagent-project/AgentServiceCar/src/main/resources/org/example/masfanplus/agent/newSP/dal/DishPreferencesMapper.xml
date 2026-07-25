@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.agent.newSP.dal.mapper.DishPreferencesMapper">
+    <resultMap id="BaseResultMap" type="org.example.agent.Sp.dal.entity.DishPreferencesEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="dish_id" jdbcType="BIGINT" property="dishId"/>
+        <result column="preference_score" jdbcType="NUMERIC" property="preferenceScore"/>
+        <result column="appearance_count" jdbcType="INTEGER" property="appearanceCount"/>
+        <result column="last_appearance_date" jdbcType="DATE" property="lastAppearanceDate"/>
+        <result column="recent_reviews" jdbcType="CLOB" property="recentReviews"/>
+        <result column="history_reviews" jdbcType="CLOB" property="historyReviews"/>
+        <result column="create_by" jdbcType="VARCHAR" property="createBy"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_by" jdbcType="VARCHAR" property="updateBy"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id, dish_id, preference_score, appearance_count, last_appearance_date, recent_reviews,
+        history_reviews, create_by, create_time, update_by, update_time
+    </sql>
+
+</mapper>

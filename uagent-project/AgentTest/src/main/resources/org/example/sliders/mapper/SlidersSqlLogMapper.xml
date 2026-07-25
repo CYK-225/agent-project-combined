@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.sliders.mapper.SlidersSqlLogMapper">
+
+    <resultMap id="BaseResultMap" type="org.example.sliders.entity.SlidersSqlLogEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="task_id" jdbcType="VARCHAR" property="taskId"/>
+        <result column="sql_query" jdbcType="VARCHAR" property="sqlQuery"/>
+        <result column="query_purpose" jdbcType="VARCHAR" property="queryPurpose"/>
+        <result column="result_summary" jdbcType="VARCHAR" property="resultSummary"/>
+        <result column="is_error" jdbcType="BOOLEAN" property="isError"/>
+        <result column="error_detail" jdbcType="VARCHAR" property="errorDetail"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`, `task_id`, `sql_query`, `query_purpose`,
+        `result_summary`, `is_error`, `error_detail`, `created_at`
+    </sql>
+
+</mapper>

@@ -1,0 +1,7 @@
+{
+  "instruction": "创建一个 Python 脚本 analyze.py，读取一个 CSV 文件 data.csv，计算每列的均值并输出 JSON 格式的结果到 result.json。同时创建一个 test_analyze.py 用 pytest 测试。要求：1. analyze.py 接受命令行参数 --input 指定输入文件 2. 输出的 result.json 包含 columns 字段，列出所有列名 3. stdout 中输出 'Analysis complete' 字样 4. 程序正常运行时 exit code 为 0",
+  "taskData": "",
+  "verifier": "{\"exitCodeMustBe\":0,\"fileExists\":[\"analyze.py\",\"test_analyze.py\",\"data.csv\"],\"fileContains\":[{\"file\":\"analyze.py\",\"text\":\"argparse\"},{\"file\":\"analyze.py\",\"text\":\"json\"}],\"stdoutContains\":[\"Analysis complete\"],\"stdoutMatches\":\".*result.*\",\"command\":\"python -c \\\"import ast; ast.parse(open('analyze.py').read()); print('syntax ok')\\\"\",\"containsColumn\":[\"columns\"],\"targetFile\":\"result.json\"}",
+  "maxIterations": 1,
+  "nExploration": 2
+}

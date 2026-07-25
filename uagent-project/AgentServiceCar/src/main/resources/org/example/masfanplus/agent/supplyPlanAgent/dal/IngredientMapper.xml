@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.agent.supplyPlanAgent.dal.mapper.IngredientMapper">
+    <resultMap id="BaseResultMap" type="org.example.agent.supplyPlanAgent.dal.entity.IngredientEntity">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="ingredient_name" jdbcType="VARCHAR" property="ingredientName"/>
+        <result column="food_grade" jdbcType="VARCHAR" property="foodGrade"/>
+        <result column="raw_price" jdbcType="NUMERIC" property="rawPrice"/>
+        <result column="raw_weight" jdbcType="NUMERIC" property="rawWeight"/>
+        <result column="finished_ratio" jdbcType="NUMERIC" property="finishedRatio"/>
+        <result column="finished_weight" jdbcType="NUMERIC" property="finishedWeight"/>
+        <result column="finished_cost" jdbcType="NUMERIC" property="finishedCost"/>
+        <result column="ingredient_type" jdbcType="VARCHAR" property="ingredientType"/>
+        <result column="ratio" jdbcType="NUMERIC" property="ratio"/>
+        <result column="create_by" jdbcType="VARCHAR" property="createBy"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_by" jdbcType="VARCHAR" property="updateBy"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id, ingredient_name, food_grade, raw_price, raw_weight, finished_ratio, finished_weight,
+        finished_cost, ingredient_type, ratio, create_by, create_time, update_by, update_time
+    </sql>
+
+</mapper>
