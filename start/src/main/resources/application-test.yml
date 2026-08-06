@@ -1,0 +1,385 @@
+management:
+  tracing:
+    sampling:
+      probability: 1.0 # Sample 100% of requests for full tracing (adjust in production as needed)
+  observations:
+    annotations:
+      enabled: true # Enable @Observed (if you use observation annotations in code)
+
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.neo4j.Neo4jAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.neo4j.Neo4jRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.neo4j.Neo4jDataAutoConfiguration
+  web:
+    resources:
+      static-locations: classpath:/dist/,classpath:/static/
+  neo4j:
+    enabled: false
+    uri: bolt://8.163.67.126:7687
+    authentication:
+      username: neo4j
+      password: MASFanYou
+    pool:
+      metrics-enabled: true
+      log-slow-queries: true
+      max-connection-pool-size: 50
+      connection-acquisition-timeout: 30s
+  ai:
+    vectorstore:
+      milvus:
+        enabled: false
+        client:
+          host: 8.163.67.126
+          #          host: localhost
+          port: 19530
+        embedding-dimension: 1536
+        initialize-schema: true
+    skill:
+      fileDir: /usr/local/server/ai/uAi/skill
+
+  threads:
+    virtual:
+      enabled: true
+  application:
+    name: MASFanAgent
+  datasource:
+    dynamic:
+      primary: postgresql-business
+      datasource:
+        postgresql-business:
+          url: jdbc:postgresql://8.163.67.126:5433/postgres?currentSchema=business
+          username: postgres
+          password: TideLink0131
+          driver-class-name: org.postgresql.Driver
+          type : com.zaxxer.hikari.HikariDataSource
+          hikari:
+            minimumIdle: 1
+            maximumPoolSize: 30
+            idleTimeout: 30000
+            maxLifetime: 60000
+        postgresql-session:
+          url: jdbc:postgresql://8.163.67.126:5433/postgres?currentSchema=session
+          username: postgres
+          password: TideLink0131
+          driver-class-name: org.postgresql.Driver
+          type: com.zaxxer.hikari.HikariDataSource
+          hikari:
+            minimumIdle: 1
+            maximumPoolSize: 30
+            idleTimeout: 30000
+            maxLifetime: 60000
+        postgresql-prediction:
+          url: jdbc:postgresql://8.163.67.126:5433/postgres?currentSchema=prediction
+          username: postgres
+          password: TideLink0131
+          driver-class-name: org.postgresql.Driver
+          type: com.zaxxer.hikari.HikariDataSource
+          hikari:
+            minimumIdle: 1
+            maximumPoolSize: 30
+            idleTimeout: 30000
+            maxLifetime: 60000
+        postgresql-agent_test:
+          url: jdbc:postgresql://8.163.67.126:5433/postgres?currentSchema=agent_test
+          username: postgres
+          password: TideLink0131
+          driver-class-name: org.postgresql.Driver
+          type: com.zaxxer.hikari.HikariDataSource
+          hikari:
+            minimumIdle: 1
+            maximumPoolSize: 30
+            idleTimeout: 30000
+            maxLifetime: 60000
+server:
+  port: 8089
+logging:
+  level:
+    #    root: DEBUG
+    org.example.agent: DEBUG
+    org.springframework.web.client: DEBUG
+#    io.agentscope.core: DEBUG
+
+
+
+
+
+
+jetcache:
+  ## ?????0?????????????????????
+  statIntervalMinutes: 15
+  ## ???cacheName??????key??
+  areaInCacheName: false
+  ## ??????
+  local:
+    default: ## default??????????????cacheName
+      ## ????????????caffeine/linkedhashmap
+      type: caffeine
+      keyConvertor: jackson
+      #expireAfterWrite: 1800s # ?????10????
+  # lettuce??????
+  remote:
+    default:
+      type: redis.lettuce
+      keyConvertor: jackson   # fastjson/jackson
+      broadcastChannel: ${spring.application.name}
+      valueEncoder: java    #other choose?kryo/kryo5
+      valueDecoder: java    #other choose?kryo/kryo5
+      #expireAfterWrite: 1800s # ?????10???? 10m
+      # uri???redis://??@ip:??/redis???timeout=5s
+      # ??????
+      uri:
+        - redis://TideLink0131@8.163.67.126:6380
+      # ?????????????
+      #uri: redis-sentinel://39.99.144.212:26379,39.99.144.212:26380,39.99.144.212:26381/?sentinelMasterId=mymaster
+
+bocha:
+  api-key: sk-f586d0d6a6634c39bf392ee4210f0b2d
+  base-url: https://api.bochaai.com/v1/web-search
+
+qwen:
+  apiKey: sk-e26ef7931f2a480b9d7ec6a2fb56527a
+
+ollama:
+  base-url: http://192.168.168.103:11434
+  modelName: fervent_mcclintock
+
+reme:
+  base-url: http://8.163.67.126:8002/
+
+ai-url:
+  ai-callback: http://8.163.67.126:9099/api/phone/callback
+
+AutoContextConfig:
+  msgThreshold: 100  #触发压缩的消息数量阈值
+  maxToken : 131072  #上下文最大token数量阈值
+  tokenRatio : 0.75  #触发压缩的token比例阈值
+  lastKeep : 50      #保持未压缩的最近信息数量（仅再策略 1: 压缩历史工具调用、策略 2: 卸载大型消息（带 lastKeep 保护）中生效）
+  largePayloadThreshold : 131072  #大型消息阈值（字符数）
+  offloadSinglePreview : 200  #卸载消息的预览长度（字符数）
+  minConsecutiveToolMessages : 6  #压缩所需的最小连续工具消息数量
+  currentRoundCompressionRatio : 0.3  #当前轮次消息的压缩比例
+
+bge:
+  m3:
+  #    model-path: G:\??\bge-m3-onnx\model.onnx
+  #    tokenizer-path: G:\??\bge-m3-onnx\tokenizer.json
+  #    model-path: S:\project_2025\AI??\????\??\bge-m3-onnx\model.onnx
+  #    tokenizer-path: S:\project_2025\AI??\????\??\bge-m3-onnx\tokenizer.json
+#    model-path: D:\毕设项目\模型\生成稀疏向量\bge-m3-onnx\model.onnx
+#    tokenizer-path: D:\毕设项目\模型\生成稀疏向量\bge-m3-onnx\tokenizer.json
+#      model-path: C:\project\AI project\bge-m3-onnx\model.onnx
+#      tokenizer-path: C:\project\AI project\bge-m3-onnx\tokenizer.json
+
+
+## ????????
+#app:
+#  document:
+#    auto-process:
+#      enabled: false  # ???true???????false??
+#    path: G:/??.docx
+mybatis-flex:
+  # ??????? configuration ??
+  configuration:
+    # ???????????????? SQL ??????????
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+agentscope:
+  toolkit:
+    parallel: false
+    allow-tool-deletion: false
+    enableMetaTool: true
+    timeout-seconds: 300
+  agui:
+    path-prefix: /agui
+    cors-enabled: true
+    server-side-memory: true
+    max-thread-sessions: 1000
+    session-timeout-minutes: 30
+    enable-reasoning: true
+  studio:
+    enabled: true
+    url: http://8.163.67.126:3000
+
+plan:
+  notebook:
+    default-max-subtasks: 20       # 修改默认最大子任务数
+    default-need-confirm: true     # 修改默认是否需要确认
+
+
+
+
+# 利润分析智能体调试模式配置
+finance-agent:
+  debug-enabled: false  # 调试模式开关：true=前端显示系统状态提示(开发者模式)，false=仅输出工具调用和最终结果(用户模式)
+
+# OpenAI 兼容适配层配置
+# LobeChat 等前端通过这些 Key 接入 Agent
+openai:
+  adapter:
+    enabled: true
+    # 只暴露属于该分组的 Agent，对应 @AgentDefinition(group = "openai")
+    group: openai
+    api-keys:
+      - sk-agentcar-2026-abc123
+      - sk-agentcar-2026-def456
+    sse-timeout: 1800000   # 30 分钟
+
+mcp:
+  annotation:
+    enabled: true              # 启用注解扫描
+    default-group: default     # 默认分组
+    auto-register: true        # 自动注册工具
+    default-timeout: 30000     # 默认超时(ms)
+    async-thread-pool-size: 4  # 异步线程池大小
+
+# 图工作流引擎配置
+graph:
+  workflow:
+    engine:
+      default-checkpoint-strategy: memory
+      parallel-executor-enabled: true    # 并行使用虚拟线程
+      default-recursion-limit: 25
+
+takeout:
+  appId: cli_79b4340a2e9142e
+  appSecret: 7846f1ec3a2411f1ae0400163e0c5614
+  baseUrl: http://business.youfantech.cn
+
+# =============================================================================
+# Skill 配置（用于自动生成 .env 和 config.yaml）
+# =============================================================================
+skill:
+  config:
+    # ---------------------------------------------------------------------------
+    # 数据查询统计数据库配置（原有配置）
+    # ---------------------------------------------------------------------------
+    database:
+      host: ${DB_HOST:rr-wz96iz1x9ed83elo2ho.mysql.rds.aliyuncs.com}
+      port: ${DB_PORT:3306}
+      name: ${DB_NAME:menu_recommand}
+      user: ${DB_USER:zjh_read}
+      password: ${DB_PASSWORD:9^4e70NT2cpqeIrNPAjo}
+
+    # ---------------------------------------------------------------------------
+    # DataPlatform 数据库配置（etl_order_data_daily 所在库）
+    # ---------------------------------------------------------------------------
+    dataplatform:
+      host: ${DP_HOST:rr-wz96iz1x9ed83elo2ho.mysql.rds.aliyuncs.com}
+      port: ${DP_PORT:3306}
+      name: ${DP_NAME:dp}
+      user: ${DP_USER:zjh_read}
+      password: ${DP_PASSWORD:9^4e70NT2cpqeIrNPAjo}
+
+    # ---------------------------------------------------------------------------
+    # 对话存储数据库配置（新增，独立数据库）
+    # ---------------------------------------------------------------------------
+    conversation-db:
+      host: ${CONVERSATION_DB_HOST:rr-wz96iz1x9ed83elo2ho.mysql.rds.aliyuncs.com}
+      port: ${CONVERSATION_DB_PORT:3306}
+      name: ${CONVERSATION_DB_NAME:conversation_db}
+      user: ${CONVERSATION_DB_USER:zjh_read}
+      password: ${CONVERSATION_DB_PASSWORD:9^4e70NT2cpqeIrNPAjo}
+
+    wecom:
+      enabled: ${WECOM_ENABLED:true}
+
+# DBAgent配置
+dbagent:
+  frontend:
+    # 是否在前端显示选填项（true=显示，false=隐藏，仅显示必填项）
+    show-optional: ${DBAGENT_SHOW_OPT:true}
+  mysql:
+    url: jdbc:mysql://${DBAGENT_MYSQL_HOST:8.163.67.126}:${DBAGENT_MYSQL_PORT:5433}/${DBAGENT_MYSQL_DB:agent_test}?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DBAGENT_MYSQL_USER:postgres}
+    password: ${DBAGENT_MYSQL_PASS:TideLink0131}
+    connect-timeout: 10
+    query-timeout: 30
+  postgres:
+    url: jdbc:postgresql://${DBAGENT_PG_HOST:8.163.67.126}:${DBAGENT_PG_PORT:5433}/${DBAGENT_PG_DB:agent_test}?connectTimeout=10000&socketTimeout=30000
+    username: ${DBAGENT_PG_USER:postgres}
+    password: ${DBAGENT_PG_PASS:TideLink0131}
+  git:
+    repo-url: ${DBAGENT_GIT_REPO:http://git.ubox-takeout.cn/root/uagent-project.git}
+    branch: ${DBAGENT_GIT_BRANCH:ai-dao}
+    local-path: ${DBAGENT_GIT_LOCAL:D:/公司_团餐/公司内部提效/DBAgent/test}
+    username: ${GIT_USER:zhangjiahui1}
+    token: ${GIT_TOKEN:ynsti6xP6c9hQGzyu9Fk}
+  codegen:
+    base-package: ${DBAGENT_BASE_PKG:org.example.repository.dal}
+  # 类型映射配置
+  type-mapping:
+    basic-mappings:
+      # 整数类型
+      BIGINT: Long
+      BIGSERIAL: Long
+      INT8: Long
+      INT: Integer
+      INTEGER: Integer
+      SERIAL: Integer
+      INT4: Integer
+      SMALLINT: Integer
+      INT2: Integer
+      TINYINT: Integer
+      # 布尔类型
+      BOOL: Boolean
+      BOOLEAN: Boolean
+      BIT: Boolean
+      # 浮点类型
+      FLOAT: Float
+      FLOAT4: Float
+      REAL: Float
+      DOUBLE: Double
+      FLOAT8: Double
+      "DOUBLE PRECISION": Double
+      DECIMAL: java.math.BigDecimal
+      NUMERIC: java.math.BigDecimal
+      # 字符串类型
+      VARCHAR: String
+      CHAR: String
+      "CHARACTER VARYING": String
+      BPCHAR: String
+      TEXT: String
+      TINYTEXT: String
+      MEDIUMTEXT: String
+      LONGTEXT: String
+      ENUM: String
+      SET: String
+      UUID: String
+      CIDR: String
+      INET: String
+      MACADDR: String
+      XML: String
+      JSON: String
+      JSONB: String
+      # 日期时间类型
+      DATE: java.time.LocalDate
+      DATETIME: java.time.LocalDateTime
+      TIMESTAMP: java.time.LocalDateTime
+      TIMESTAMPTZ: java.time.LocalDateTime
+      "TIMESTAMP WITH TIME ZONE": java.time.LocalDateTime
+      "TIMESTAMP WITHOUT TIME ZONE": java.time.LocalDateTime
+      TIME: java.time.LocalTime
+      TIMETZ: java.time.LocalTime
+      "TIME WITH TIME ZONE": java.time.LocalTime
+      "TIME WITHOUT TIME ZONE": java.time.LocalTime
+      YEAR: Integer
+      # 二进制类型
+      BLOB: byte[]
+      TINYBLOB: byte[]
+      MEDIUMBLOB: byte[]
+      LONGBLOB: byte[]
+      BINARY: byte[]
+      VARBINARY: byte[]
+      BYTEA: byte[]
+    # JSONB字段自定义类映射
+    jsonb-mappings:
+      # 格式: 表名.字段名 -> 完整类名
+      # 示例: user_profile.settings: com.example.model.UserSettings
+      # 默认映射（使用 DEFAULT 作为全局通配符键）
+      DEFAULT: com.fasterxml.jackson.databind.JsonNode
+    # TypeHandler配置
+    type-handlers:
+      JSONB: com.example.handler.JsonbTypeHandler
+      JSON: com.example.handler.JsonTypeHandler
