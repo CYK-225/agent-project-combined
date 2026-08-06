@@ -69,7 +69,7 @@ public class AgentPoolProperties {
      * 容器访问主机的回调基础URL
      * 使用host.docker.internal实现容器到主机的通信
         */
-    private String callbackBaseUrl = "http://8.129.128.167:8081";
+    private String callbackBaseUrl = "http://8.163.67.126:8081";
 
     // ==================== 路径配置 ====================
 

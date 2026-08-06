@@ -36,6 +36,10 @@ output_dir: str = os.environ.get('OUTPUT_DIR', '/app/anno')
 registration_dto: Dict[str, Any] = {}  # 保存 AgentScope 后端注册时传入的完整 DTO
 callback_url: str = ""                 # 从 DTO 中提取，回调地址
 
+# 中止标志
+abort_flag: bool = False
+abort_lock: threading.Lock = threading.Lock()
+
 # 容器内截图基础目录（固定，与 volume 挂载对应）
 CONTAINER_ANNO_DIR = "/app/anno"
 
@@ -46,11 +50,15 @@ CONTAINER_ANNO_DIR = "/app/anno"
 
 @app.route('/gui/register', methods=['POST'])
 def gui_register():
-    global registration_dto, callback_url
+    global registration_dto, callback_url, abort_flag
     data = request.get_json()
 
     if not data.get('agent_id'):
         return jsonify({"success": False, "error": "agent_id 不能为空"}), 400
+
+    # 重置中止标志
+    with abort_lock:
+        abort_flag = False
 
     # 保存完整 DTO，后续回调时基于它追加/覆盖字段
     registration_dto = data
@@ -60,13 +68,52 @@ def gui_register():
 
 
 # ---------------------------------------------------------------------------
+# 中止接口 - 后端调用以中止当前任务
+# ---------------------------------------------------------------------------
+
+@app.route('/abort', methods=['POST'])
+def abort_task():
+    global abort_flag
+    data = request.get_json() or {}
+    task_id_req = data.get('task_id', '')
+
+    with abort_lock:
+        abort_flag = True
+
+    logger.info(f"[V3] 收到中止信号，task_id={task_id_req}")
+    return jsonify({"success": True, "message": "中止信号已接收"})
+
+
+@app.route('/abort/reset', methods=['POST'])
+def reset_abort():
+    global abort_flag
+
+    with abort_lock:
+        abort_flag = False
+
+    logger.info("[V3] 中止标志已重置")
+    return jsonify({"success": True, "message": "中止标志已重置"})
+
+
+# ---------------------------------------------------------------------------
 # 核心辅助函数：异步执行动作 + 自动截图 + 回调
 # ---------------------------------------------------------------------------
+
+def is_aborted() -> bool:
+    """检查是否已中止"""
+    with abort_lock:
+        return abort_flag
+
 
 def execute_and_screenshot_async(step: int, action_func):
     """
     在后台线程中执行 GUI 动作、截图、回调。
     """
+    # 检查是否已中止
+    if is_aborted():
+        logger.info(f"[V3] 任务已中止，跳过步骤 {step}")
+        return None
+
     # 容器内保存路径
     container_dir = os.path.join(CONTAINER_ANNO_DIR, task_id)
     os.makedirs(container_dir, exist_ok=True)
@@ -79,6 +126,11 @@ def execute_and_screenshot_async(step: int, action_func):
     success = True
 
     with gui_lock:
+        # 再次检查是否已中止
+        if is_aborted():
+            logger.info(f"[V3] 任务已中止，跳过步骤 {step}")
+            return None
+        
         try:
             if action_func is not None:
                 result_text = action_func()
@@ -123,6 +175,11 @@ def execute_and_screenshot_async(step: int, action_func):
 
 def async_dispatch(step: int, action_func):
     """启动后台线程执行，立即返回 202"""
+    # 检查是否已中止
+    if is_aborted():
+        logger.info(f"[V3] 任务已中止，拒绝执行步骤 {step}")
+        return jsonify({"status": "aborted", "step": step, "message": "任务已中止"}), 409
+    
     threading.Thread(
         target=execute_and_screenshot_async,
         args=(step, action_func),
@@ -290,10 +347,6 @@ def take_screenshot():
         return jsonify({'error': f'截取屏幕截图失败：{e}'}), 500
 
 
-# 任务中止标志
-abort_flag = threading.Event()
-
-
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
     def shutdown_handler():
@@ -301,30 +354,6 @@ def shutdown():
         os.kill(os.getpid(), signal.SIGTERM)
     threading.Thread(target=shutdown_handler, daemon=True).start()
     return jsonify({'status': '正在关闭'})
-
-
-@app.route('/abort', methods=['POST'])
-def abort_task():
-    """中止当前任务（软中止，不关闭容器）"""
-    data = request.get_json(force=True) if request.is_json else {}
-    task_id_to_abort = data.get('task_id', '')
-    logger.info(f"[V3] 收到中止请求，task_id={task_id_to_abort}")
-    abort_flag.set()
-    return jsonify({'status': 'aborted', 'task_id': task_id_to_abort, 'message': '任务已中止'})
-
-
-@app.route('/abort/reset', methods=['POST'])
-def reset_abort_flag():
-    """重置中止标志（新任务开始前调用）"""
-    abort_flag.clear()
-    logger.info("[V3] 中止标志已重置")
-    return jsonify({'status': 'ok', 'message': '中止标志已重置'})
-
-
-@app.route('/abort/status', methods=['GET'])
-def get_abort_status():
-    """查询中止标志状态"""
-    return jsonify({'aborted': abort_flag.is_set()})
 
 
 if __name__ == '__main__':

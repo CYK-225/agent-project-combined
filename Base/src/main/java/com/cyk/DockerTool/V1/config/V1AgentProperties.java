@@ -57,7 +57,7 @@ public class V1AgentProperties {
     /**
      * 默认回调 URL
      */
-    private String defaultCallbackUrl = "http://8.129.128.167:8081/api/docker/callback";
+    private String defaultCallbackUrl = "http://8.163.67.126:8081/api/docker/callback";
 
     /**
      * Docker 镜像名称

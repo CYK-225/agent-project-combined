@@ -21,9 +21,13 @@ public class HutoolAgentPlatformClient implements AgentPlatformClient {
     @Value("${agent.bridge.agent-platform-url:http://localhost:8089}")
     private String agentPlatformUrl;
 
-    /** 本服务地址（用于回调） */
+    /** 本服务地址（用于容器回调，通过frp映射） */
     @Value("${agent.bridge.self-base-url:http://localhost:8081}")
     private String selfBaseUrl;
+
+    /** AI中台回调本服务地址（AI中台与本服务在同一机器，使用本地地址） */
+    @Value("${agent.bridge.ai-platform-callback-url:http://127.0.0.1:8081}")
+    private String aiPlatformCallbackUrl;
 
     /** 回调路径 */
     @Value("${agent.bridge.callback-path:/api/v3/agent/callback}")
@@ -38,7 +42,7 @@ public class HutoolAgentPlatformClient implements AgentPlatformClient {
         log.info("[AgentPlatformClient] 调用 Agent，taskId: {}", notifyDTO.getTaskId());
 
         try {
-            notifyDTO.setCallbackUrl(selfBaseUrl + callbackPath);
+            notifyDTO.setCallbackUrl(aiPlatformCallbackUrl + callbackPath);
             // 直接序列化 DTO
             String jsonBody = JSON.toJSONString(notifyDTO);
             JSONObject body = JSON.parseObject(jsonBody);
@@ -80,7 +84,7 @@ public class HutoolAgentPlatformClient implements AgentPlatformClient {
             // resume 场景复用 invoke 接口（AI 中台的 invoke 支持"创建或恢复会话"）
             // 按文档 InvokeAgentRequest 格式组装请求体
 
-            notifyDTO.setCallbackUrl(selfBaseUrl + callbackPath);
+            notifyDTO.setCallbackUrl(aiPlatformCallbackUrl + callbackPath);
             // 直接序列化 DTO
             String jsonBody = JSON.toJSONString(notifyDTO);
             JSONObject body = JSON.parseObject(jsonBody);

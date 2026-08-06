@@ -40,7 +40,7 @@ public class CookieProperties {
     /**
      * 默认回调 URL (注意：修正了连续两个端口号的问题)
      */
-    private String defaultCallbackUrl = "http://8.129.128.167:8099/api/cookie/callback";
+    private String defaultCallbackUrl = "http://8.163.67.126:9099/api/cookie/callback";
 
     /**
      * 内存限制（字节）- 1GB

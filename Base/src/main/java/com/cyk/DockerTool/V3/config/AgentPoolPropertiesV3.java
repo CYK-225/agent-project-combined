@@ -30,7 +30,7 @@ public class AgentPoolPropertiesV3 {
 
     private long idleTimeoutSeconds = 300;
 
-    private String imageName = "gui-agent:v3";
+    private String imageName = "autogui-v3:latest";
 
     private long memoryLimit = 1073741824L;
 
@@ -38,7 +38,9 @@ public class AgentPoolPropertiesV3 {
 
     private long shmSize = 536870912L;
 
-    private String callbackBaseUrl = "http://8.129.128.167";
+    private String callbackBaseUrl = "http://8.163.67.126";
+
+    private String dockerHostIp = "8.163.67.126";
 
     // ==================== 路径配置 ====================
 

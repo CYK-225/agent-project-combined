@@ -135,7 +135,7 @@ public class AgentControllerV3 {
             response.put("status", "accepted");
             response.put("task_id", taskId);
             response.put("username", request.getUsername());
-            response.put("container_id", pod.getContainerId());
+            response.put("containerId", pod.getContainerId());
             response.put("profile", pod.getProfileName());
             response.put("vnc_port", pod.getVncPort());
             response.put("message", "[V3] 任务已受理，正在后台进行单步回调调度...");
@@ -224,7 +224,7 @@ public class AgentControllerV3 {
 
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("status", "env_ready");
-            response.put("container_id", pod.getContainerId());
+            response.put("containerId", pod.getContainerId());
             response.put("vnc_port", pod.getVncPort());
             response.put("message", "[V3] 虚拟浏览器环境已准备就绪，请在 VNC 画面中进行人工登录。");
 
@@ -516,7 +516,7 @@ public class AgentControllerV3 {
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("status", "accepted");
             response.put("task_id", taskId);
-            response.put("container_id", pod.getContainerId());
+            response.put("containerId", pod.getContainerId());
             response.put("vnc_port", pod.getVncPort());
             response.put("message", "[V3] 追加指令已受理，正在后台进行单步回调调度...");
 
@@ -604,7 +604,7 @@ public class AgentControllerV3 {
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("status", "accepted");
             response.put("task_id", taskId);
-            response.put("container_id", pod.getContainerId());
+            response.put("containerId", pod.getContainerId());
             response.put("current_instruction", firstInstruction);
             response.put("remaining_count", queue.size());
             response.put("message", "[V3] 批量指令已受理，正在后台按顺序调度...");
@@ -691,10 +691,10 @@ public class AgentControllerV3 {
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("status", "connected");
             response.put("task_id", taskId);
-            response.put("container_id", pod.getContainerId());
+            response.put("containerId", pod.getContainerId());
             response.put("profile", pod.getProfileName());
             response.put("vnc_port", pod.getVncPort());
-            response.put("container_url", properties.getCallbackBaseUrl() + ":" + pod.getAssignedPort());
+            response.put("container_url", "http://" + properties.getDockerHostIp() + ":" + pod.getAssignedPort());
             response.put("message", "[V3] 容器已就绪，请通过VNC连接查看。使用 /task/execute 接口发送提示词执行任务。");
 
             return ResponseEntity.ok(response);
@@ -836,7 +836,7 @@ public class AgentControllerV3 {
                     .sysPrompt(sysPrompt)
                     .instruction(stepPrompt)
                     .step(step)
-                    .containerUrl(properties.getCallbackBaseUrl() + ":" + ctx.getPod().getAssignedPort())
+                    .containerUrl("http://" + properties.getDockerHostIp() + ":" + ctx.getPod().getAssignedPort())
                     .build();
 
             // 调用AI中台

@@ -133,7 +133,7 @@ public class V3TaskExecutor implements TaskExecutor {
                 .sysPrompt(sysPrompt)
                 .promptsId(String.valueOf(promptId))
                 .step(1)
-                .containerUrl(properties.getCallbackBaseUrl() + ":" + pod.getAssignedPort())
+                .containerUrl("http://" + properties.getDockerHostIp() + ":" + pod.getAssignedPort())
                 .build();
 
         log.info("[V3执行器] 发起Agent调用: v3TaskId={}, promptsId={}, step=1, sysPrompt前80字={}",

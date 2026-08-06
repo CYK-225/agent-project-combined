@@ -178,7 +178,7 @@ public class ENSController {
 //                    config.setCompanyName(company);
 //                    config.setConfigName(request.getConfigName());
 //                    config.setType("aqc");
-//                    config.setCallbackUrl("http://8.129.128.167:8081/api/docker/ens/callback1");
+//                    config.setCallbackUrl("http://8.163.67.126:8081/api/docker/ens/callback1");
 //                    ensService.runENSAgent(config);
 //                } catch (Exception e) {
 //                    log.error("启动批量任务异常: {}", e.getMessage());

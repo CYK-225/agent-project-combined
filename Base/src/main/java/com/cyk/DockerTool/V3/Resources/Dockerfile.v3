@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     scrot \
     xclip \
     xsel \
+    xdotool \ 
     fonts-wqy-zenhei \
     fonts-wqy-microhei \
     fontconfig \

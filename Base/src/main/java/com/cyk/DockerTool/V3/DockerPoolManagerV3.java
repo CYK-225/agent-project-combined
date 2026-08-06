@@ -119,11 +119,18 @@ public class DockerPoolManagerV3 {
             try {
                 containerId = createContainer(profileName, apiPort, vncPort, macAddress);
                 
-                ContainerPodV3 pod = new ContainerPodV3(containerId, apiPort, vncPort, profileName, profileName, macAddress);
+                dockerClient.startContainerCmd(containerId).exec();
+                
+                // 获取容器实际映射的端口（Docker可能分配了不同的端口）
+                int[] actualPorts = getActualContainerPorts(containerId, apiPort, vncPort);
+                int actualApiPort = actualPorts[0];
+                int actualVncPort = actualPorts[1];
+                
+                ContainerPodV3 pod = new ContainerPodV3(containerId, actualApiPort, actualVncPort, profileName, profileName, macAddress);
                 activePods.put(containerId, pod);
                 
-                dockerClient.startContainerCmd(containerId).exec();
-                log.info("[V3] 容器{}已在端口{}(API)和{}(VNC)上启动，配置文件：{}", pod.getShortId(), apiPort, vncPort, profileName);
+                log.info("[V3] 容器{}已在端口{}(API)和{}(VNC)上启动（请求端口：{}/{}），配置文件：{}", 
+                        pod.getShortId(), actualApiPort, actualVncPort, apiPort, vncPort, profileName);
                 
                 waitForContainerReady(pod);
                 
@@ -171,6 +178,44 @@ public class DockerPoolManagerV3 {
         }
         
         throw new RuntimeException("[V3] 创建容器失败：超过最大重试次数");
+    }
+
+    /**
+     * 获取容器实际映射的端口（Docker可能分配了与请求不同的端口）
+     */
+    private int[] getActualContainerPorts(String containerId, int requestedApiPort, int requestedVncPort) {
+        try {
+            com.github.dockerjava.api.command.InspectContainerResponse containerInfo = 
+                    dockerClient.inspectContainerCmd(containerId).exec();
+            
+            Map<ExposedPort, Ports.Binding[]> bindings = containerInfo.getNetworkSettings().getPorts().getBindings();
+            
+            int actualApiPort = requestedApiPort;
+            int actualVncPort = requestedVncPort;
+            
+            // 获取API端口的实际映射
+            Ports.Binding[] apiBindings = bindings.get(ExposedPort.tcp(requestedApiPort));
+            if (apiBindings != null && apiBindings.length > 0) {
+                actualApiPort = Integer.parseInt(apiBindings[0].getHostPortSpec());
+            }
+            
+            // 获取VNC端口的实际映射
+            Ports.Binding[] vncBindings = bindings.get(ExposedPort.tcp(requestedVncPort));
+            if (vncBindings != null && vncBindings.length > 0) {
+                actualVncPort = Integer.parseInt(vncBindings[0].getHostPortSpec());
+            }
+            
+            if (actualApiPort != requestedApiPort || actualVncPort != requestedVncPort) {
+                log.info("[V3] 容器{}端口已重新映射：请求端口{}/{} -> 实际端口{}/{}",
+                        containerId.substring(0, 12), requestedApiPort, requestedVncPort, actualApiPort, actualVncPort);
+            }
+            
+            return new int[]{actualApiPort, actualVncPort};
+            
+        } catch (Exception e) {
+            log.warn("[V3] 获取容器{}实际端口失败，使用请求端口：{}", containerId.substring(0, 12), e.getMessage());
+            return new int[]{requestedApiPort, requestedVncPort};
+        }
     }
 
     private String createContainer(String profileName, int apiPort, int vncPort, String macAddress) {
@@ -242,8 +287,8 @@ public class DockerPoolManagerV3 {
         log.debug("[V3] 挂载浏览器配置（只读）：{} -> /app/base_profile (ro)", hostUserBasePath);
 
         Ports portBindings = new Ports();
-        portBindings.bind(ExposedPort.tcp(apiPort), Ports.Binding.bindPort(apiPort));
-        portBindings.bind(ExposedPort.tcp(vncPort), Ports.Binding.bindPort(vncPort));
+        portBindings.bind(ExposedPort.tcp(apiPort), Ports.Binding.bindIpAndPort("0.0.0.0", apiPort));
+        portBindings.bind(ExposedPort.tcp(vncPort), Ports.Binding.bindIpAndPort("0.0.0.0", vncPort));
 
         HostConfig hostConfig = HostConfig.newHostConfig()
                 .withAutoRemove(false)
@@ -287,20 +332,26 @@ public class DockerPoolManagerV3 {
     private void waitForContainerReady(ContainerPodV3 pod) {
         int maxAttempts = 30;
         int attempt = 0;
+        String url = STR."\{javaBaseUrl}:\{pod.getAssignedPort()}/health";
+
+        log.info("[V3] 开始等待容器{}就绪，健康检查URL：{}", pod.getShortId(), url);
 
         while (attempt < maxAttempts) {
             try {
-                String url = STR."\{javaBaseUrl}:\{pod.getAssignedPort()}/health";
                 ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
 
                 if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                     String status = (String) response.getBody().get("status");
+                    log.info("[V3] 容器{}健康检查响应：status={}", pod.getShortId(), status);
                     if ("healthy".equals(status)) {
+                        log.info("[V3] 容器{}已就绪", pod.getShortId());
                         return;
                     }
+                } else {
+                    log.warn("[V3] 容器{}健康检查响应异常：statusCode={}", pod.getShortId(), response.getStatusCode());
                 }
             } catch (Exception e) {
-                log.trace("[V3] 容器{}尚未就绪（尝试{}/{}）：{}",
+                log.warn("[V3] 容器{}尚未就绪（尝试{}/{}）：{}",
                         pod.getShortId(), attempt + 1, maxAttempts, e.getMessage());
             }
 
@@ -313,6 +364,7 @@ public class DockerPoolManagerV3 {
             }
         }
 
+        log.error("[V3] 容器{}在{}次尝试后仍未能就绪，最后尝试的URL：{}", pod.getShortId(), maxAttempts, url);
         throw new RuntimeException("[V3] 容器" + pod.getShortId() + "在超时时间内未能就绪");
     }
 
@@ -595,7 +647,7 @@ public class DockerPoolManagerV3 {
 
             for (Container container : containers) {
                 String imageName = container.getImage();
-                if (imageName != null && imageName.contains("gui-agent:v3")) {
+                if (imageName != null && imageName.contains("autogui-v3")) {
                     String[] names = container.getNames();
                     if (names != null) {
                         for (String name : names) {

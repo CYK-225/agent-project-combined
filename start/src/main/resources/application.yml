@@ -11,9 +11,9 @@ spring:
 
   datasource:
     # 直接把 url, username 等写在 datasource 下面
-    url: jdbc:postgresql://8.129.128.167:5432/postgres?currentSchema=information_tool_database&stringtype=unspecified
+    url: jdbc:postgresql://8.163.67.126:5433/postgres?currentSchema=information_tool_database&stringtype=unspecified
     username: postgres
-    password: postgresTest@123
+    password: TideLink0131
     driver-class-name: org.postgresql.Driver
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
@@ -39,8 +39,8 @@ enscan:
 docker:
   # 你的远程服务器 Docker TCP 地址
   #  host: tcp://172.17.80.1 :2376
-  host: ssh://zjhtest@8.129.128.167:22
-  password: zWF7fV7W
+  host: ssh://root@8.163.67.126:31
+  password: TideLink0131
 #  # 你的远程服务器 IP (用于发送 HTTP 请求到 Python 容器)
 #  server-ip: 47.119.39.86
 
@@ -62,7 +62,7 @@ agent:
     # 输出目录名称（相对于基础目录）
     output-dir-name: OutPut
     # 默认回调 URL
-    default-callback-url: http://8.129.128.167:8081/api/docker/ens/callback
+    default-callback-url: http://8.163.67.126:8081/api/docker/ens/callback
     # Docker 镜像名称
     image-name: gui-agent:ENS
     # 内存限制（字节）
@@ -86,7 +86,7 @@ agent:
     # 输出目录名称（相对于用户配置目录）
     output-dir-name: OutPut
     # 默认回调 URL
-    default-callback-url: http://8.129.128.167:8081/api/docker/callback
+    default-callback-url: http://8.163.67.126:8081/api/docker/callback
     # Docker 镜像名称
     image-name: gui-agent:V1
     # 内存限制（字节）
@@ -104,7 +104,7 @@ agent:
   pool:
     # Nginx base URL for serving container screenshots and resources
     # Container screenshots will be accessible at: {nginx-base-url}/screenshots/{containerId}/{filename}
-    java-base-url: http://8.129.128.167
+    java-base-url: http://8.163.67.126
     # Maximum number of containers in the pool
     max-pool-size: 10
     # Port range for container agent servers
@@ -120,7 +120,7 @@ agent:
     shm-size: 536870912       # 512MB
     # Callback base URL for container-to-host communication
     # Uses host.docker.internal for containers to reach the host
-    callback-base-url: http://8.129.128.167:8081
+    callback-base-url: http://8.163.67.126:8081
     # ==================== V2 路径配置 ====================
     # 【重要】用户数据基础路径（云服务器上的实际路径）
     # 所有用户的浏览器配置和输出文件都将保存在此目录下
@@ -163,9 +163,10 @@ agent:
   bridge:
     # AI 中台地址
     agent-platform-url: http://localhost:8089
-    # 本服务地址（用于回调）
-    self-base-url: http://localhost:8081
-#    self-base-url: http://8.129.128.167:8081
+    # 本服务地址（用于容器回调，通过frp映射）
+    self-base-url: http://8.163.67.126:9998
+    # AI中台回调本服务地址（AI中台与本服务在同一机器，使用本地地址）
+    ai-platform-callback-url: http://127.0.0.1:8081
     # 回调路径
     callback-path: /api/v3/agent/callback
     # HTTP 超时时间（毫秒）
@@ -175,7 +176,7 @@ agent:
   v3:
     pool:
       # Java后端基础URL（用于健康检查）
-      java-base-url: http://8.129.128.167
+      java-base-url: http://8.163.67.126
       # Maximum number of containers in the pool
       max-pool-size: 10
       # Port range for container agent servers (与V2的9101-9200错开)
@@ -184,13 +185,15 @@ agent:
       # Container idle timeout in seconds (5 minutes)
       idle-timeout-seconds: 300
       # Docker image for V3 agents
-      image-name: gui-agent:v3
+      image-name: autogui-v3:latest
       # Memory limits for containers
       memory-limit: 1073741824  # 1GB
       memory-swap: 2147483648   # 2GB
       shm-size: 536870912       # 512MB
-      # Callback base URL for container-to-host communication
-      callback-base-url: http://8.129.128.167
+      # Callback base URL for container-to-host communication (通过frp映射)
+      callback-base-url: http://8.163.67.126:9099
+      # Docker宿主机IP（用于拼接容器直接访问URL）
+      docker-host-ip: 8.163.67.126
       # ==================== V3 路径配置 ====================
       profile-base-path: /usr/local/server/ai/AutoGUI/V3/profiles
       output-dir-name: OutPut
@@ -227,7 +230,7 @@ agent:
       # 容器访问主机的回调基础URL
       callback-base-url: http://host.docker.internal:8089
       # Java后端基础URL（用于健康检查）
-      java-base-url: http://8.129.128.167
+      java-base-url: http://8.163.67.126
 
       # ==================== 路径配置 ====================
       # 微信数据基础路径（云服务器上的实际路径）
@@ -276,7 +279,7 @@ agent:
     cookie-pool-path: /usr/local/server/ai/AutoGUI/ENS/Profiles
 
     # 默认回调 URL（用于 Python 获取到 Cookie 后通知 Java）
-    default-callback-url: http://8.129.128.167:8081/api/cookie/callback
+    default-callback-url: http://8.163.67.126:8081/api/cookie/callback
 
     # Docker 镜像名称 (阶段二的采摘者)
     image-name: gui-agent:cookie-get

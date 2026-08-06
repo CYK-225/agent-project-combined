@@ -445,7 +445,7 @@ public class HrV3Controller {
                         .sysPrompt(sysPrompt)
                         .instruction(sysPrompt)
                         .step(-1)
-                        .containerUrl(properties.getCallbackBaseUrl() + ":" + ctx.getPod().getAssignedPort())
+                        .containerUrl("http://" + properties.getDockerHostIp() + ":" + ctx.getPod().getAssignedPort())
                         .build();
                 
                 boolean invoked = agentBridgeManager.invokeAgent(sysDto);
@@ -476,7 +476,7 @@ public class HrV3Controller {
                     .sessionId(taskId)
                     .instruction(stepPrompts.get(0).getContent())
                     .step(1)
-                    .containerUrl(properties.getCallbackBaseUrl() + ":" + ctx.getPod().getAssignedPort())
+                    .containerUrl("http://" + properties.getDockerHostIp() + ":" + ctx.getPod().getAssignedPort())
                     .build();
             
             boolean invoked = agentBridgeManager.invokeAgent(firstStepDto);

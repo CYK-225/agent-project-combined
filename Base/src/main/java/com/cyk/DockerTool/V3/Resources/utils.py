@@ -106,11 +106,26 @@ class ComputerTools:
             pyautogui.press(keys[0])
 
     def type_text(self, text: str) -> None:
-        pyperclip.copy(text)
-        pyautogui.keyDown("ctrl")
-        pyautogui.keyDown("v")
-        pyautogui.keyUp("v")
-        pyautogui.keyUp("ctrl")
+        # 在Linux容器中使用xdotool输入文本（支持中文和特殊字符）
+        if sys.platform == "linux":
+            try:
+                # 使用xdotool输入文本，需要安装xdotool
+                subprocess.run(['xdotool', 'type', '--clearmodifiers', '--delay', '0', text], check=True)
+                return
+            except (FileNotFoundError, subprocess.CalledProcessError) as e:
+                logger.warning(f"xdotool不可用，尝试pyperclip: {e}")
+        
+        # 回退到pyperclip方式（Windows/Mac）
+        try:
+            pyperclip.copy(text)
+            pyautogui.keyDown("ctrl")
+            pyautogui.keyDown("v")
+            pyautogui.keyUp("v")
+            pyautogui.keyUp("ctrl")
+        except Exception as e:
+            logger.error(f"输入文本失败: {e}")
+            # 最后回退：使用pyautogui.write()（仅支持ASCII）
+            pyautogui.write(text, interval=0.02)
 
     def open_app(self, app_name: str, wait: float = 0.5) -> None:
         if app_name == "File Explorer":
