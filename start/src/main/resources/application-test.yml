@@ -149,7 +149,7 @@ reme:
   base-url: http://8.163.67.126:8002/
 
 ai-url:
-  ai-callback: http://8.163.67.126:9099/api/phone/callback
+  ai-callback: http://8.163.67.126:8989/api/phone/callback
 
 AutoContextConfig:
   msgThreshold: 100  #触发压缩的消息数量阈值

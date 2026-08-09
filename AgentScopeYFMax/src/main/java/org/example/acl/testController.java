@@ -16,7 +16,7 @@ import java.util.Map;
 @RequestMapping("/api/v3/test")
 public class testController {
 
-    private static final String FRP_CALLBACK_URL = "http://8.163.67.126:9099/api/phone/callback";
+    private static final String FRP_CALLBACK_URL = "http://8.163.67.126:8989/api/phone/callback";
 
     /**
      * 测试健康检查（同步接口，可以直接看结果）

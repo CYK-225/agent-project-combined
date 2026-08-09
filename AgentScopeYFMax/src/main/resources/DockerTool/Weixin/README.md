@@ -77,7 +77,7 @@ wechat:
     memory-limit: 2147483648      # 2GB
     memory-swap: 4294967296       # 4GB
     shm-size: 1073741824          # 1GB
-    callback-base-url: http://8.163.67.126:9099
+    callback-base-url: http://8.163.67.126:8989
     java-base-url: http://host.docker.internal
     default-api-key: your-api-key
     default-base-url: https://dashscope.aliyuncs.com/compatible-mode/v1

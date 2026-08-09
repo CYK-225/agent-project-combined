@@ -78,7 +78,7 @@ public class WeChatDockerConfiguration {
     /**
      * 容器访问主机的回调基础 URL
      */
-    private String callbackBaseUrl = "http://8.163.67.126:9099";
+    private String callbackBaseUrl = "http://8.163.67.126:8989";
 
     /**
      * Java 后端基础 URL（用于健康检查）
