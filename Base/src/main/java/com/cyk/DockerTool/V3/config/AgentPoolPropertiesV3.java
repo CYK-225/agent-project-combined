@@ -38,9 +38,9 @@ public class AgentPoolPropertiesV3 {
 
     private long shmSize = 536870912L;
 
-    private String callbackBaseUrl = "http://8.163.67.126";
+    private String callbackBaseUrl;
 
-    private String dockerHostIp = "8.163.67.126";
+    private String dockerHostIp;
 
     // ==================== 路径配置 ====================
 
@@ -52,11 +52,11 @@ public class AgentPoolPropertiesV3 {
 
     // ==================== LLM默认配置 ====================
 
-    private String defaultApiKey = "sk-e26ef7931f2a480b9d7ec6a2fb56527a";
+    private String defaultApiKey;
 
-    private String defaultBaseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1";
+    private String defaultBaseUrl;
 
-    private String defaultModel = "qwen3.5-plus";
+    private String defaultModel;
 
     private int defaultMaxSteps = 40;
 

@@ -45,9 +45,9 @@ public class ENSAgentProperties {
     // ==================== 默认配置 ====================
 
     /**
-     * 默认回调 URL
+     * 默认回调 URL（由 yml agent.ens.default-callback-url 配置）
      */
-    private String defaultCallbackUrl = "http://8.163.67.126:8081/api/docker/ens/callback";
+    private String defaultCallbackUrl;
 
     /**
      * Docker 镜像名称

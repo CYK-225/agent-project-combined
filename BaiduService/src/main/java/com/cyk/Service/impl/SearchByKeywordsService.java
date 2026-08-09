@@ -21,7 +21,8 @@ public class SearchByKeywordsService {
     @Value("${baidu.map.ak}")
     private String ak;
 
-    private final String url = "https://api.map.baidu.com/place/v2/search";
+    @Value("${baidu.map.search-url}")
+    private String url;
 
     /**
      * 搜索区域内写字楼

@@ -55,9 +55,9 @@ public class V1AgentProperties {
     // ==================== 默认配置 ====================
 
     /**
-     * 默认回调 URL
+     * 默认回调 URL（由 yml agent.v1.default-callback-url 配置）
      */
-    private String defaultCallbackUrl = "http://8.163.67.126:8081/api/docker/callback";
+    private String defaultCallbackUrl;
 
     /**
      * Docker 镜像名称
@@ -87,19 +87,19 @@ public class V1AgentProperties {
     // ==================== LLM API 配置（新增）====================
 
     /**
-     * LLM API Key
+     * LLM API Key（由 yml agent.v1.api-key 配置）
      */
-    private String apiKey = "";
+    private String apiKey;
 
     /**
-     * LLM API Base URL
+     * LLM API Base URL（由 yml agent.v1.base-url 配置）
      */
-    private String baseUrl = "https://api.openai.com/v1";
+    private String baseUrl;
 
     /**
-     * LLM 模型名称
+     * LLM 模型名称（由 yml agent.v1.model 配置）
      */
-    private String model = "gpt-4o";
+    private String model;
 
     /**
      * 默认配置文件名称

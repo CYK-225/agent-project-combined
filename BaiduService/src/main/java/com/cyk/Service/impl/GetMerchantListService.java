@@ -23,9 +23,11 @@ public class GetMerchantListService {
     @Value("${baidu.map.ak}")
     private String ak;
 
-    private final String Search_Url = "https://api.map.baidu.com/place/v2/search";
+    @Value("${baidu.map.search-url}")
+    private String Search_Url;
 
-    private final String RouteCalculate_Url  = "https://api.map.baidu.com/routematrix/v2/riding";
+    @Value("${baidu.map.route-calculate-url}")
+    private String RouteCalculate_Url;
 
     public JSONObject getMerchantCount(String BuildingLocation, String Radius) {
 

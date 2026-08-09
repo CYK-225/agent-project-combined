@@ -1,0 +1,48 @@
+# ==================================================
+# 本地测试环境配置（application.yml 中 spring.profiles.active: local 默认激活）
+# 本地环境：AI 中台、工具平台运行在本地（WSL），容器运行在远端服务器
+# 因此容器回调本地服务必须走 frp 公网端口（8.163.67.126 上的 frps 端口）：
+#   - 工具平台回调：frp 端口 8981 → 本地 WSL 8081
+#   - uagent(AI中台)回调：frp 端口 8989 → 本地 WSL 8089
+# 固定配置（数据库、Docker 宿主、Java 调容器地址等）在公共文件 application.yml
+# ==================================================
+
+agent:
+  ens:
+    # 默认回调 URL（容器回调 Java 后端，走 frp 工具平台段 8981 → 本地 8081）
+    default-callback-url: http://8.163.67.126:8981/api/docker/ens/callback
+
+  v1:
+    # 默认回调 URL（容器回调 Java 后端，走 frp 工具平台段）
+    default-callback-url: http://8.163.67.126:8981/api/docker/callback
+
+  pool:
+    # Callback base URL（容器回调 Java 后端，走 frp 工具平台段）
+    callback-base-url: http://8.163.67.126:8981
+
+  # AI 中台配置（AI 中台与工具平台同在本机，互调用本地地址）
+  bridge:
+    # AI 中台地址（Java 调用 AI 中台，本机）
+    agent-platform-url: http://localhost:8089
+    # 本服务公网地址（容器回调本服务，走 frp 工具平台段）
+    self-base-url: http://8.163.67.126:8981
+    # AI中台回调本服务地址（同机）
+    ai-platform-callback-url: http://127.0.0.1:8081
+    # 回调路径
+    callback-path: /api/v3/agent/callback
+    # HTTP 超时时间（毫秒）
+    timeout: 30000
+
+  v3:
+    pool:
+      # Callback base URL（容器回调 Java 后端，走 frp 工具平台段）
+      callback-base-url: http://8.163.67.126:8981
+
+  wechat:
+    pool:
+      # 容器访问主机的回调基础URL（走 frp uagent 段 8989 → 本地 8089）
+      callback-base-url: http://8.163.67.126:8989
+
+  cookie:
+    # 默认回调 URL（用于 Python 获取到 Cookie 后通知 Java，走 frp 工具平台段）
+    default-callback-url: http://8.163.67.126:8981/api/cookie/callback

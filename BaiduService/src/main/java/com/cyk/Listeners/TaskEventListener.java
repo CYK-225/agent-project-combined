@@ -13,6 +13,7 @@ import com.mybatisflex.core.query.QueryColumn;
 import com.mybatisflex.core.update.UpdateChain;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -36,6 +37,13 @@ public class TaskEventListener {
     private EnsDataSyncComponent ensDataSyncComponent;
     @Resource
     private SseEmitterManager sseEmitterManager;
+
+    // 任务访问的目标网站地址（由 yml task.web-address 配置）
+    @Value("${task.web-address.riskbird}")
+    private String riskbirdWebAddress;
+
+    @Value("${task.web-address.zhipin}")
+    private String zhipinWebAddress;
 
     // =====================================================================
     // 1. 监听: ENS 数据抓取完成，进行同步落库
@@ -141,7 +149,7 @@ public class TaskEventListener {
             case "ENS" -> {
                 needFind = filterMapByKeysAndNullValue(companiesEntityNow, nonAiObtainableFields, true);
                 mission = "rb";
-                webAddress = "https://www.riskbird.com/";
+                webAddress = riskbirdWebAddress;
             }
             case "AI" -> {
                 if (event.isRetry()) {
@@ -151,7 +159,7 @@ public class TaskEventListener {
                     needFind = filterMapByKeysAndNullValue(companiesEntityNow, aiObtainableFields, true);
                     mission = iCategoriesService.getCategoryByName("获取性别信息");
                 }
-                webAddress = "https://www.zhipin.com/";
+                webAddress = zhipinWebAddress;
             }
             case "SPECIAL" -> {
                 // 补全遗漏：原本 onTaskFailed 里独有的 SPECIAL 重试逻辑

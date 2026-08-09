@@ -25,9 +25,11 @@ public class SearchCompanyByBuildingService {
     @Value( "${baidu.map.ak}")
     private String ak;
 
-    private final String Search_Url = "https://api.map.baidu.com/place/v2/search";
+    @Value("${baidu.map.search-url}")
+    private String Search_Url;
 
-    private final String Detail_Url = "https://api.map.baidu.com/place/v2/detail";
+    @Value("${baidu.map.detail-url}")
+    private String Detail_Url;
 
     @Resource
     private IBuildingsService buildingsService;

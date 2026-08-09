@@ -1,0 +1,46 @@
+# ==================================================
+# 生产环境配置（Jenkins 部署时通过 --spring.profiles.active=prod 激活）
+# 只包含随环境变化的配置：容器回调地址、AI 中台相关地址
+# 数据库 / Docker 等固定配置在公共文件 application.yml 中
+# ==================================================
+
+agent:
+  ens:
+    # 默认回调 URL（容器回调 Java 后端）
+    default-callback-url: http://8.163.67.126:8081/api/docker/ens/callback
+
+  v1:
+    # 默认回调 URL（容器回调 Java 后端）
+    default-callback-url: http://8.163.67.126:8081/api/docker/callback
+
+  pool:
+    # Callback base URL（容器回调 Java 后端；生产同机，容器通过宿主机 IP:8081 直连）
+    callback-base-url: http://8.163.67.126:8081
+
+  # AI 中台配置
+  bridge:
+    # AI 中台地址（Java 调用 AI 中台）
+    agent-platform-url: http://localhost:8089
+    # 本服务公网地址（用于容器回调；生产同机，直接用宿主机 8081 本地监听端口）
+    self-base-url: http://8.163.67.126:8081
+    # AI中台回调本服务地址（AI中台与本服务在同一机器，使用本地地址）
+    ai-platform-callback-url: http://127.0.0.1:8081
+    # 回调路径
+    callback-path: /api/v3/agent/callback
+    # HTTP 超时时间（毫秒）
+    timeout: 30000
+
+  v3:
+    pool:
+      # Callback base URL（容器回调 Java 后端；生产同机，直连宿主机 8081）
+      callback-base-url: http://8.163.67.126:8081
+
+  wechat:
+    pool:
+      # ==================== 网络配置 ====================
+      # 容器访问主机的回调基础URL（生产同机，容器内 host.docker.internal 即宿主机）
+      callback-base-url: http://host.docker.internal:8089
+
+  cookie:
+    # 默认回调 URL（用于 Python 获取到 Cookie 后通知 Java）
+    default-callback-url: http://8.163.67.126:8081/api/cookie/callback

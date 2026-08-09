@@ -36,7 +36,7 @@ pipeline {
                                 execCommand: '''
                                     cd /opt/apps/agent-project-new
                                     pkill -f agent-project-new || true
-                                    nohup java -jar *.jar > app.log 2>&1 &
+                                    nohup java -jar *.jar --spring.profiles.active=prod > app.log 2>&1 &
                                 '''
                             )
                         ]

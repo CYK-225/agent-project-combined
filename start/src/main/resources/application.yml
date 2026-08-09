@@ -4,13 +4,16 @@ server:
 spring:
   application:
     name: baidu-service
+  # 默认激活本地环境配置（本地直接 run 即为 local，安全）
+  # 生产环境由 Jenkins 启动参数显式指定 --spring.profiles.active=prod
+  profiles:
+    active: local
   web:
     resources:
       static-locations: classpath:/dist/
 
-
   datasource:
-    # 直接把 url, username 等写在 datasource 下面
+    # 数据库地址固定（本地与生产共用同一数据库）
     url: jdbc:postgresql://8.163.67.126:5433/postgres?currentSchema=information_tool_database&stringtype=unspecified
     username: postgres
     password: TideLink0131
@@ -21,9 +24,14 @@ spring:
       maximumPoolSize: 30
       idleTimeout: 30000
       maxLifetime: 60000
+
 baidu:
   map:
     ak: EMAJHisHdHWGnrfbcjkWbmzqEJq7twd0
+    # 百度地图 API 地址（固定第三方服务）
+    search-url: https://api.map.baidu.com/place/v2/search
+    detail-url: https://api.map.baidu.com/place/v2/detail
+    route-calculate-url: https://api.map.baidu.com/routematrix/v2/riding
 
 logging:
   level:
@@ -35,23 +43,23 @@ enscan:
   api:
     url: http://127.0.0.1:31000
 
-
 docker:
-  # 你的远程服务器 Docker TCP 地址
+  # 远程服务器 Docker 连接（固定，本地与生产共用）
   #  host: tcp://172.17.80.1 :2376
   host: ssh://root@8.163.67.126:31
   password: TideLink0131
-#  # 你的远程服务器 IP (用于发送 HTTP 请求到 Python 容器)
-#  server-ip: 47.119.39.86
 
-#spring-boot:
-#  # Python 容器向 Java 发送回调时的基础地址
-#  # 【注意】：如果是内网穿透，请填写穿透后的域名，如 http://abc.ngrok.io
-#  callback-base-url: http://47.119.39.86:8089/api/docker/callback
+# 任务访问的目标网站地址（业务配置，ENS 任务去风鸟、AI 任务去 BOSS 直聘）
+task:
+  web-address:
+    riskbird: https://www.riskbird.com/
+    zhipin: https://www.zhipin.com/
 
-# ENS Agent Configuration
+# ==================================================
+# 以下 agent 配置中，仅【回调地址类】配置项（容器回调 Java 后端、
+# AI 中台回调本服务）随环境变化，见 application-prod.yml / application-local.yml
+# ==================================================
 agent:
-
 
   ens:
     # ==================== ENS 路径配置 ====================
@@ -61,8 +69,6 @@ agent:
     enscan-path: /usr/local/server/ai/AutoGUI/ENS/enscan
     # 输出目录名称（相对于基础目录）
     output-dir-name: OutPut
-    # 默认回调 URL
-    default-callback-url: http://8.163.67.126:8081/api/docker/ens/callback
     # Docker 镜像名称
     image-name: gui-agent:ENS
     # 内存限制（字节）
@@ -85,8 +91,6 @@ agent:
     runner-script-path: /usr/local/server/ai/AutoGUI/V1/Resources/run_gui_owl_1_5_for_pc.py
     # 输出目录名称（相对于用户配置目录）
     output-dir-name: OutPut
-    # 默认回调 URL
-    default-callback-url: http://8.163.67.126:8081/api/docker/callback
     # Docker 镜像名称
     image-name: gui-agent:V1
     # 内存限制（字节）
@@ -102,8 +106,7 @@ agent:
 
   # V2 Agent Pool Configuration
   pool:
-    # Nginx base URL for serving container screenshots and resources
-    # Container screenshots will be accessible at: {nginx-base-url}/screenshots/{containerId}/{filename}
+    # Java 调用容器的地址（Docker 宿主机 IP，固定；容器端口映射在宿主机上）
     java-base-url: http://8.163.67.126
     # Maximum number of containers in the pool
     max-pool-size: 10
@@ -118,9 +121,6 @@ agent:
     memory-limit: 1073741824  # 1GB
     memory-swap: 2147483648   # 2GB
     shm-size: 536870912       # 512MB
-    # Callback base URL for container-to-host communication
-    # Uses host.docker.internal for containers to reach the host
-    callback-base-url: http://8.163.67.126:8081
     # ==================== V2 路径配置 ====================
     # 【重要】用户数据基础路径（云服务器上的实际路径）
     # 所有用户的浏览器配置和输出文件都将保存在此目录下
@@ -159,24 +159,13 @@ agent:
     default-max-steps: 40
     default-model: qwen3.5-plus
 
-  # AI 中台配置
-  bridge:
-    # AI 中台地址
-    agent-platform-url: http://localhost:8089
-    # 本服务地址（用于容器回调，通过frp映射）
-    self-base-url: http://8.163.67.126:9998
-    # AI中台回调本服务地址（AI中台与本服务在同一机器，使用本地地址）
-    ai-platform-callback-url: http://127.0.0.1:8081
-    # 回调路径
-    callback-path: /api/v3/agent/callback
-    # HTTP 超时时间（毫秒）
-    timeout: 30000
-
   # V3 Agent Pool Configuration
   v3:
     pool:
-      # Java后端基础URL（用于健康检查）
+      # Java 调用容器的地址（Docker 宿主机 IP，固定）
       java-base-url: http://8.163.67.126
+      # Docker宿主机IP（用于拼接容器直接访问URL，固定）
+      docker-host-ip: 8.163.67.126
       # Maximum number of containers in the pool
       max-pool-size: 10
       # Port range for container agent servers (与V2的9101-9200错开)
@@ -190,10 +179,6 @@ agent:
       memory-limit: 1073741824  # 1GB
       memory-swap: 2147483648   # 2GB
       shm-size: 536870912       # 512MB
-      # Callback base URL for container-to-host communication (通过frp映射)
-      callback-base-url: http://8.163.67.126:9099
-      # Docker宿主机IP（用于拼接容器直接访问URL）
-      docker-host-ip: 8.163.67.126
       # ==================== V3 路径配置 ====================
       profile-base-path: /usr/local/server/ai/AutoGUI/V3/profiles
       output-dir-name: OutPut
@@ -207,6 +192,8 @@ agent:
   # WeChat Agent Pool Configuration
   wechat:
     pool:
+      # Java 调用容器的地址（Docker 宿主机 IP，固定）
+      java-base-url: http://8.163.67.126
       # ==================== 池配置 ====================
       # 最大容器数量
       max-pool-size: 10
@@ -225,12 +212,6 @@ agent:
       memory-swap: 4294967296
       # 容器共享内存大小（1GB）
       shm-size: 1073741824
-
-      # ==================== 网络配置 ====================
-      # 容器访问主机的回调基础URL
-      callback-base-url: http://host.docker.internal:8089
-      # Java后端基础URL（用于健康检查）
-      java-base-url: http://8.163.67.126
 
       # ==================== 路径配置 ====================
       # 微信数据基础路径（云服务器上的实际路径）
@@ -278,9 +259,6 @@ agent:
     # 宿主机Cookie池物理路径，所有的 Cookie 状态 JSON 都存在这里
     cookie-pool-path: /usr/local/server/ai/AutoGUI/ENS/Profiles
 
-    # 默认回调 URL（用于 Python 获取到 Cookie 后通知 Java）
-    default-callback-url: http://8.163.67.126:8081/api/cookie/callback
-
     # Docker 镜像名称 (阶段二的采摘者)
     image-name: gui-agent:cookie-get
 
@@ -303,4 +281,3 @@ agent:
 
     # 使用的具体模型名称
     ai-model: qwen3.5-plus
-

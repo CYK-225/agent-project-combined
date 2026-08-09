@@ -18,15 +18,15 @@ import org.springframework.stereotype.Component;
 public class HutoolAgentPlatformClient implements AgentPlatformClient {
 
     /** AI 中台地址 */
-    @Value("${agent.bridge.agent-platform-url:http://localhost:8089}")
+    @Value("${agent.bridge.agent-platform-url}")
     private String agentPlatformUrl;
 
     /** 本服务地址（用于容器回调，通过frp映射） */
-    @Value("${agent.bridge.self-base-url:http://localhost:8081}")
+    @Value("${agent.bridge.self-base-url}")
     private String selfBaseUrl;
 
     /** AI中台回调本服务地址（AI中台与本服务在同一机器，使用本地地址） */
-    @Value("${agent.bridge.ai-platform-callback-url:http://127.0.0.1:8081}")
+    @Value("${agent.bridge.ai-platform-callback-url}")
     private String aiPlatformCallbackUrl;
 
     /** 回调路径 */

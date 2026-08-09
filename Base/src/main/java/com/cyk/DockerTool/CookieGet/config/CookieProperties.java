@@ -38,9 +38,9 @@ public class CookieProperties {
     private String imageName = "gui-agent:cookie-get";
 
     /**
-     * 默认回调 URL (注意：修正了连续两个端口号的问题)
+     * 默认回调 URL（由 yml agent.cookie.default-callback-url 配置）
      */
-    private String defaultCallbackUrl = "http://8.163.67.126:9099/api/cookie/callback";
+    private String defaultCallbackUrl;
 
     /**
      * 内存限制（字节）- 1GB

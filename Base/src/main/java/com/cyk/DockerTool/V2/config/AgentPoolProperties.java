@@ -66,10 +66,10 @@ public class AgentPoolProperties {
     private long shmSize = 536870912L;
 
     /**
-     * 容器访问主机的回调基础URL
+     * 容器访问主机的回调基础URL（由 yml agent.pool.callback-base-url 配置）
      * 使用host.docker.internal实现容器到主机的通信
         */
-    private String callbackBaseUrl = "http://8.163.67.126:8081";
+    private String callbackBaseUrl;
 
     // ==================== 路径配置 ====================
 
@@ -96,19 +96,19 @@ public class AgentPoolProperties {
     // ==================== LLM默认配置 ====================
 
     /**
-     * LLM API密钥（从配置获取，如未配置则使用默认值）
+     * LLM API密钥（由 yml agent.pool.default-api-key 配置）
         */
-    private String defaultApiKey = "sk-e26ef7931f2a480b9d7ec6a2fb56527a";
+    private String defaultApiKey;
 
     /**
-     * LLM API基础URL（从配置获取，如未配置则使用默认值）
+     * LLM API基础URL（由 yml agent.pool.default-base-url 配置）
         */
-    private String defaultBaseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1";
+    private String defaultBaseUrl;
 
     /**
-     * LLM模型名称（从配置获取，如未配置则使用默认值）
+     * LLM模型名称（由 yml agent.pool.default-model 配置）
         */
-    private String defaultModel = "qwen3.5-plus";
+    private String defaultModel;
     /**
      * LLM最大步骤数（从配置获取，如未配置则使用默认值）
         */
