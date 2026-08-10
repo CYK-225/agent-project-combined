@@ -81,7 +81,7 @@ const selectedProfile = ref('')
 const profileList = ref([])
 
 // VNC 相关
-const VNC_HOST = '8.129.128.167'
+const VNC_HOST = '8.163.67.126'
 
 /**
  * 生成随机奇数端口

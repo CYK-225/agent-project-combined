@@ -91,6 +91,6 @@ export function getV3AgentHealth() {
  * @returns {string} SSE 连接 URL
  */
 export function getSseUrl(clientId) {
-  const baseUrl = import.meta.env.VITE_BASE_URL || 'http://8.129.128.167:8081'
+  const baseUrl = import.meta.env.VITE_BASE_URL || 'http://8.129.128.167:8981'
   return `${baseUrl}/api/hr/v3/sse/${clientId}`
 }

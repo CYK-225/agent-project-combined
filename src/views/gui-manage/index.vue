@@ -297,7 +297,7 @@ const handleUnload = () => {
 
   const containerId = guiStore.containerId
   const token = localStorage.getItem('token') || ''
-  const baseUrl = import.meta.env.VITE_API_BASE || 'http://8.129.128.167:8081'
+  const baseUrl = import.meta.env.VITE_API_BASE || 'http://8.129.128.167:8981'
   const url = `${baseUrl}/api/v3/agent/container/${containerId}`
 
   // 优先使用 sendBeacon（异步但不会被浏览器拦截）

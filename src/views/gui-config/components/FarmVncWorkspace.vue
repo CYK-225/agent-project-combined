@@ -36,7 +36,7 @@ import { v4 as uuidv4 } from 'uuid'
 const guiConfigStore = useGuiConfigStore()
 
 // VNC 相关
-const VNC_HOST = '8.129.128.167'
+const VNC_HOST = '8.163.67.126'
 
 const vncContainer = ref(null)
 const loading = ref(false)
