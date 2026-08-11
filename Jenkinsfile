@@ -12,16 +12,15 @@ pipeline {
     stages {
         stage('构建') {
             steps {
-                dir('uagent-project') {
-                    sh 'mvn clean package -DskipTests'
-                }
+                // 仓库根目录即 Maven 多模块工程，直接在此构建
+                sh 'mvn clean package -DskipTests'
             }
         }
         stage('部署') {
             steps {
                 sh """
                     mkdir -p ${APP_DIR}
-                    cp uagent-project/start/target/uagent.jar ${APP_DIR}/uagent.jar.new
+                    cp start/target/uagent.jar ${APP_DIR}/uagent.jar.new
                     bash ${APP_DIR}/restart.sh
                 """
             }
