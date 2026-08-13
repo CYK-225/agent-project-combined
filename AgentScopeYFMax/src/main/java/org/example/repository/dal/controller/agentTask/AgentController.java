@@ -94,11 +94,13 @@ public class AgentController {
         }
 
         if (existingTask != null) {
-            // 任务已存在 → 更新指令（工具平台可能多次调用同一 taskId，每次带不同指令）
+            // 任务已存在 → 更新指令 + 同步刷新 AI 中台回调地址（以当前配置为准），
+            // 避免历史落盘的旧回调地址残留，导致容器回调失效、故障难排查
             existingTask.setInstruction(request.getInstruction());
+            existingTask.setAiCallbackUrl(request.getAiCallbackUrl());
             existingTask.setUpdatedAt(new Date());
             agentTaskService.updateById(existingTask);
-            log.info("[AgentController] 任务已存在，更新指令，taskId: {}", taskId);
+            log.info("[AgentController] 任务已存在，更新指令与回调地址，taskId: {}", taskId);
         } else {
             // 创建新任务
             AgentTaskEntity task = agentTaskService.toEntity(request);

@@ -177,9 +177,10 @@ public class AgentTaskExecutorService {
             AgentTaskEntity taskEntity = agentTaskService.selectByTaskId(dto.getTaskId());
             if (taskEntity != null) {
                 taskEntity.setCallbackUrl(dto.getCallbackUrl());
-                // aiCallbackUrl：优先用 DB 中落盘的值（createOrUpdateTask 从配置写入），
-                // DB 为空则用本服务注入的配置兜底，绝不用 DTO 的值（工具平台不知道此字段）
-                if (taskEntity.getAiCallbackUrl() == null || taskEntity.getAiCallbackUrl().isBlank()) {
+                // aiCallbackUrl：以配置文件 ai-url.ai-callback 为准（配置优先），
+                // 避免 DB 中历史落盘的旧值覆盖最新配置导致回调地址失效、故障难排查；
+                // 配置为空时才回退到 DB 落盘值，绝不用 DTO 的值（工具平台不知道此字段）
+                if (aiCallbackUrl != null && !aiCallbackUrl.isBlank()) {
                     taskEntity.setAiCallbackUrl(aiCallbackUrl);
                 }
                 guiClient.registerAgent(taskEntity);
