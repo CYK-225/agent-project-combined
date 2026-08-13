@@ -121,8 +121,8 @@ reme:
   base-url: http://127.0.0.1:8002/
 
 ai-url:
-  # 生产环境：AI中台与容器同机运行，回调使用本地回环地址 + 本地监听端口
-  ai-callback: http://127.0.0.1:8089/api/phone/callback
+  # 生产环境：AI中台与容器同机运行，容器为bridge网络模式，容器内通过 host.docker.internal 访问宿主机
+  ai-callback: http://host.docker.internal:8089/api/phone/callback
 
 AutoContextConfig:
   msgThreshold: 100
