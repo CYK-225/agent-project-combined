@@ -416,12 +416,12 @@ const handleAbortTask = async () => {
 }
 
 /**
- * 获取环境配置列表
+ * 获取环境配置列表（新统一响应结构 { code, message, data }）
  */
 const fetchProfiles = async () => {
   try {
-    const data = await getFarmProfiles()
-    profileList.value = Array.isArray(data) ? data : []
+    const res = await getFarmProfiles()
+    profileList.value = res?.code === 200 && Array.isArray(res.data) ? res.data : []
   } catch (error) {
     console.error('获取配置列表失败:', error)
   }

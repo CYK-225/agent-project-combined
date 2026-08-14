@@ -13,8 +13,13 @@
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
-        <el-button type="primary" :icon="Plus" @click="handleAddProfile">
-          新增配置
+        <el-button
+          type="primary"
+          :icon="Plus"
+          :disabled="guiConfigStore.isVncActive"
+          @click="openCreateDialog"
+        >
+          新建养号
         </el-button>
       </div>
 
@@ -27,11 +32,22 @@
           @click="handleSelectProfile(profile)"
         >
           <div class="card-content">
-            <div class="profile-name">{{ profile.profileName }}</div>
+            <div class="card-top">
+              <div class="profile-name">{{ profile.profileName }}</div>
+              <el-button
+                type="primary"
+                size="small"
+                plain
+                :icon="EditPen"
+                @click.stop="handleMarkProfile(profile)"
+              >
+                标记
+              </el-button>
+            </div>
             <div class="profile-summary">{{ profile.summary || '暂无描述' }}</div>
           </div>
         </el-card>
-        <el-empty v-if="!loading && filteredProfiles.length === 0" description="暂无配置数据" />
+        <el-empty v-if="!loading && filteredProfiles.length === 0" description="暂无配置数据，点击右上角新建养号" />
       </div>
     </div>
 
@@ -39,19 +55,24 @@
     <div v-else class="profile-detail-view">
       <div class="detail-header">
         <el-button :icon="ArrowLeft" @click="handleBackToList">返回列表</el-button>
-        <div class="detail-title">当前环境: {{ currentProfile?.profileName }}</div>
+        <div class="detail-title">{{ currentProfile?.profileName }}</div>
       </div>
 
       <div class="detail-actions">
-        <el-button type="primary" :icon="Plus" @click="handleAddWebsite">
-          添加目标网址
+        <el-button
+          type="primary"
+          :icon="Promotion"
+          :disabled="guiConfigStore.isVncActive"
+          @click="handleUpdateProfile"
+        >
+          更新配置
         </el-button>
       </div>
 
       <div class="website-list">
         <div
-          v-for="(website, index) in currentProfile?.websites || []"
-          :key="index"
+          v-for="website in currentProfile?.websites || []"
+          :key="website.id"
           class="website-item"
         >
           <div class="website-info">
@@ -60,40 +81,39 @@
               {{ website.status === 1 ? '🟢 已登录' : '🔴 未登录' }}
             </el-tag>
           </div>
-          <el-button
-            type="primary"
-            size="small"
-            :icon="Promotion"
-            :disabled="guiConfigStore.isVncActive || !currentProfile"
-            @click="handleLaunchEnv(currentProfile.profileName, website.url)"
-          >
-            拉起环境
-          </el-button>
         </div>
-        <el-empty v-if="!currentProfile?.websites?.length" description="暂无网址数据" />
+        <el-empty v-if="!currentProfile?.websites?.length" description="该配置暂无网址，可在列表中点击「标记」" />
       </div>
     </div>
 
-    <!-- 激活环境时的底部操作区 -->
-    <div class="active-env-footer" v-if="guiConfigStore.isVncActive">
-      <el-button type="success" style="width: 100%; margin-bottom: 12px;" @click="emit('confirm-login')">
-        <el-icon><CircleCheck /></el-icon>我已完成登录，保存状态
-      </el-button>
-      <el-button type="danger" style="width: 100%; margin: 0;" @click="emit('destroy-env')">
-        <el-icon><CircleClose /></el-icon>销毁环境/取消
-      </el-button>
-    </div>
+    <!-- 新建养号会话对话框 -->
+    <el-dialog v-model="createDialogVisible" title="新建养号配置" width="420px">
+      <el-form label-width="80px">
+        <el-form-item label="配置名称" required>
+          <el-input
+            v-model="createForm.profileName"
+            placeholder="如: user_002"
+            maxlength="50"
+            clearable
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="createDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleCreateSubmit">新建并拉起</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Plus, ArrowLeft, Promotion, CircleCheck, CircleClose } from '@element-plus/icons-vue'
+import { Search, Plus, ArrowLeft, EditPen, Promotion } from '@element-plus/icons-vue'
 import { useGuiConfigStore } from '@/store/guiConfigStore'
-import { getFarmProfiles } from '@/api/guiConfig'
+import { getFarmProfiles, markFarmProfile } from '@/api/guiConfig'
 
-const emit = defineEmits(['launch-env', 'confirm-login', 'destroy-env'])
+const emit = defineEmits(['launch-env'])
 
 const guiConfigStore = useGuiConfigStore()
 
@@ -105,6 +125,10 @@ const loading = ref(false)
 const profiles = ref([])
 const searchKeyword = ref('')
 const currentProfile = ref(null)
+
+// 新建养号表单
+const createDialogVisible = ref(false)
+const createForm = ref({ profileName: '' })
 
 // 过滤后的配置列表
 const filteredProfiles = computed(() => {
@@ -118,12 +142,21 @@ const filteredProfiles = computed(() => {
   )
 })
 
-// 获取配置列表
+// 获取配置列表（farm/profiles 统一响应结构 { code, message, data }）
 const fetchProfiles = async () => {
   loading.value = true
   try {
-    const data = await getFarmProfiles()
-    profiles.value = Array.isArray(data) ? data : []
+    const res = await getFarmProfiles()
+    if (res?.code === 200) {
+      profiles.value = Array.isArray(res.data) ? res.data : []
+    } else {
+      ElMessage.error(res?.message || '获取配置列表失败')
+      profiles.value = []
+    }
+    // 详情视图下同步刷新当前配置引用，保证标记/保存后详情即时更新
+    if (currentProfile.value) {
+      currentProfile.value = profiles.value.find(p => p.profileName === currentProfile.value.profileName) || null
+    }
   } catch (error) {
     console.error('获取配置列表失败:', error)
     ElMessage.error('获取配置列表失败')
@@ -145,64 +178,111 @@ const handleBackToList = () => {
   currentProfile.value = null
 }
 
-// 新增配置（利用前端本地预设 + 闭环持久化机制）
-const handleAddProfile = () => {
-  ElMessageBox.prompt('请输入新的配置名称 (如: user_002)', '新增配置', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    inputPattern: /^[a-zA-Z0-9_-]+$/,
-    inputErrorMessage: '配置名称只能包含字母、数字、下划线和中划线'
-  }).then(({ value }) => {
-    // 判重校验
-    if (profiles.value.some(p => p.profileName === value)) {
-      ElMessage.warning('该配置名称已存在于列表中')
-      return
+// 更新已有配置（同名 profileName 复用宿主机目录，create 即为更新）
+const handleUpdateProfile = () => {
+  if (!currentProfile.value || guiConfigStore.isVncActive) return
+
+  ElMessageBox.confirm(
+    `将以「${currentProfile.value.profileName}」创建更新会话：复用该配置目录，系统自动打开百度，VNC 中操作实时落盘。\n确认继续？`,
+    '更新配置',
+    {
+      confirmButtonText: '确认更新',
+      cancelButtonText: '取消',
+      type: 'warning'
     }
-    // 本地预设数据，压入数组首部
-    profiles.value.unshift({
-      profileName: value,
-      summary: '新配置，等待拉起环境并登录',
-      websites: []
-    })
-    ElMessage.success('配置预设成功，请点击卡片进入并添加目标网址')
+  ).then(() => {
+    emit('launch-env', { profileName: currentProfile.value.profileName })
   }).catch(() => {
     // 用户取消操作，静默处理
   })
 }
 
-// 添加目标网址
-const handleAddWebsite = () => {
-  if (!currentProfile.value) return
+// ========== 新建养号（废弃"选网址→拉起→确认登录"旧流程，直接创建会话） ==========
 
-  ElMessageBox.prompt('请输入目标网址 (如: https://weibo.com)', '添加网址', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    inputPattern: /^https?:\/\/.+/,
-    inputErrorMessage: '请输入以 http:// 或 https:// 开头的合法网址'
-  }).then(({ value }) => {
-    // 确保 websites 数组存在
-    if (!currentProfile.value.websites) {
-      currentProfile.value.websites = []
+const openCreateDialog = () => {
+  createForm.value = { profileName: '' }
+  createDialogVisible.value = true
+}
+
+const handleCreateSubmit = () => {
+  const profileName = createForm.value.profileName.trim()
+  if (!profileName) {
+    ElMessage.warning('请输入配置名称')
+    return
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(profileName)) {
+    ElMessage.warning('配置名称只能包含字母、数字、下划线和中划线')
+    return
+  }
+  if (profiles.value.some(p => p.profileName === profileName)) {
+    ElMessage.warning('该配置名称已存在，如需更新请进入配置详情点击「更新配置」')
+    return
+  }
+
+  // VNC 端口由后端自动分配（端口资源有限），前端不传
+  createDialogVisible.value = false
+  emit('launch-env', { profileName })
+}
+
+// ========== 配置标记（独立入口，与养号会话无关联） ==========
+
+/**
+ * 打开标记网址输入框
+ * @param {string} profileName - 配置名
+ */
+const promptMark = (profileName) => {
+  ElMessageBox.prompt(
+    '请输入该配置已登录的网址 (如: https://www.zhipin.com/)',
+    `标记配置: ${profileName}`,
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      inputPattern: /^https?:\/\/.+/,
+      inputErrorMessage: '请输入以 http:// 或 https:// 开头的合法网址'
     }
-    // 判重校验
-    if (currentProfile.value.websites.some(w => w.url === value)) {
-      ElMessage.warning('该网址已存在于当前配置中')
-      return
+  ).then(async ({ value }) => {
+    try {
+      const res = await markFarmProfile({
+        profileName,
+        websiteUrl: value
+      })
+      if (res?.code === 200) {
+        ElMessage.success(res.data?.message || '配置标记成功')
+        await fetchProfiles()
+      } else {
+        ElMessage.error(res?.message || '配置标记失败')
+      }
+    } catch (error) {
+      console.error('配置标记失败:', error)
+      ElMessage.error(`配置标记失败: ${error.message || '未知错误'}`)
     }
-    // 本地预设网址，状态默认为未登录 (0)
-    currentProfile.value.websites.unshift({
-      url: value,
-      status: 0
-    })
-    ElMessage.success('网址添加成功，请点击拉起环境进行初始化登录')
   }).catch(() => {
     // 用户取消操作，静默处理
   })
 }
 
-// 拉起环境
-const handleLaunchEnv = (profileName, targetUrl) => {
-  emit('launch-env', { profileName, targetUrl })
+const handleMarkProfile = (profile) => {
+  promptMark(profile.profileName)
+}
+
+/**
+ * 保存成功后引导标记已登录网址（由 VNC 工作区保存成功后触发）
+ * @param {string} profileName - 配置名
+ */
+const openMarkDialog = (profileName) => {
+  ElMessageBox.confirm(
+    '配置已保存。是否标记本次会话中已登录的网址？\n（未标记的网址不会被任务系统视为已登录可用）',
+    '标记已登录网址',
+    {
+      confirmButtonText: '去标记',
+      cancelButtonText: '暂不',
+      type: 'info'
+    }
+  ).then(() => {
+    promptMark(profileName)
+  }).catch(() => {
+    // 用户暂不标记，静默处理
+  })
 }
 
 // 刷新列表（供父组件调用）
@@ -212,7 +292,8 @@ const refreshList = () => {
 
 // 暴露方法给父组件
 defineExpose({
-  refreshList
+  refreshList,
+  openMarkDialog
 })
 
 onMounted(() => {
@@ -265,11 +346,22 @@ onMounted(() => {
   padding: 8px 0;
 }
 
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
 .profile-name {
+  flex: 1;
   font-size: 16px;
   font-weight: 600;
   color: #303133;
-  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .profile-summary {
@@ -348,13 +440,5 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* 激活环境时的底部操作区 */
-.active-env-footer {
-  padding: 16px;
-  border-top: 1px solid #ebeef5;
-  background-color: #fafafa;
-  margin-top: auto; /* 利用 flex 自动推到最底部 */
 }
 </style>

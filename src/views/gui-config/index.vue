@@ -3,15 +3,13 @@
     <div class="workspace-wrapper">
       <!-- 左侧 VNC 工作区 (65%) -->
       <div class="left-panel">
-        <FarmVncWorkspace ref="vncWorkspaceRef" :on-refresh="handleRefreshList" />
+        <FarmVncWorkspace ref="vncWorkspaceRef" :on-refresh="handleRefreshList" @saved="handleSaved" />
       </div>
       <!-- 右侧控制台 (35%) -->
       <div class="right-panel">
         <FarmProfilePanel
           ref="profilePanelRef"
           @launch-env="handleLaunchEnv"
-          @confirm-login="handleConfirmLogin"
-          @destroy-env="handleDestroyEnv"
         />
       </div>
     </div>
@@ -27,8 +25,8 @@ const vncWorkspaceRef = ref(null)
 const profilePanelRef = ref(null)
 
 /**
- * 处理拉起环境事件
- * @param {Object} params - { profileName, targetUrl }
+ * 处理创建养号会话事件
+ * @param {Object} params - { profileName }
  */
 const handleLaunchEnv = (params) => {
   if (vncWorkspaceRef.value) {
@@ -46,20 +44,12 @@ const handleRefreshList = () => {
 }
 
 /**
- * 处理确认登录事件
+ * 保存成功后引导用户标记已登录网址
+ * @param {string} profileName - 已保存的配置名
  */
-const handleConfirmLogin = () => {
-  if (vncWorkspaceRef.value) {
-    vncWorkspaceRef.value.handleConfirmLogin()
-  }
-}
-
-/**
- * 处理销毁环境事件
- */
-const handleDestroyEnv = () => {
-  if (vncWorkspaceRef.value) {
-    vncWorkspaceRef.value.handleDestroyEnv()
+const handleSaved = (profileName) => {
+  if (profilePanelRef.value) {
+    profilePanelRef.value.openMarkDialog(profileName)
   }
 }
 </script>
