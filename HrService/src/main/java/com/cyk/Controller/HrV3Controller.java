@@ -9,8 +9,10 @@ import com.cyk.acl.agent.AgentBridgeManager;
 import com.cyk.acl.agent.dto.AgentTaskNotifyDTO;
 import com.cyk.common.ResultData;
 import com.cyk.task.DAL.Controller.DTO.CreateTaskTO;
+import com.cyk.task.DAL.DO.AuthInfoEntity;
 import com.cyk.task.DAL.DO.TaskInfoEntity;
 import com.cyk.task.DAL.Service.ITaskInfoService;
+import com.cyk.task.DAL.Service.impl.AuthInfoServiceImpl;
 import com.cyk.task.core.scheduler.CustomTaskScheduler;
 import jakarta.annotation.Resource;
 import lombok.Data;
@@ -20,6 +22,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * V3 HR 任务控制器
@@ -50,6 +53,12 @@ public class HrV3Controller {
     
     @Resource
     private AgentPoolPropertiesV3 properties;
+
+    @Resource
+    private AuthInfoServiceImpl authInfoService;
+
+    /** 养号模式默认进入的网址（百度首页） */
+    private static final String BAIDU_HOME_URL = "https://www.baidu.com";
 
     // ==================== SSE 连接 ====================
 
@@ -549,7 +558,338 @@ public class HrV3Controller {
         }
     }
     
+    // ==================== 养号（人工登录/配置制作） ====================
+
+    /**
+     * 创建养号会话：系统自动新建配置并拉起浏览器进入百度。
+     *
+     * <p>与旧版 updateProfile 流程的区别：</p>
+     * <ul>
+     *   <li>只需传入配置名，无需选择目标网址（系统固定打开百度首页）</li>
+     *   <li>浏览器配置目录以可写模式挂载，用户在 VNC 中的登录/养号操作实时落盘到服务器</li>
+     *   <li>后续养号流程完全由用户自行操作，保存时机由用户自己决定</li>
+     * </ul>
+     *
+     * @param request 创建请求（profileName、clientId 必填，port 可选）
+     * @return 容器信息（taskId, containerId, vncPort）
+     */
+    @PostMapping("/farm/create")
+    public ResultData<Map<String, Object>> createFarmSession(@RequestBody FarmCreateRequest request) {
+        log.info("[HrV3] 创建养号会话：profileName={}, clientId={}", request.getProfileName(), request.getClientId());
+
+        // 1. 参数校验
+        if (request.getProfileName() == null || request.getProfileName().isBlank()) {
+            return ResultData.error("profileName不能为空");
+        }
+        if (request.getClientId() == null || request.getClientId().isBlank()) {
+            return ResultData.error("clientId不能为空");
+        }
+
+        // 2. 生成taskId
+        String taskId = String.valueOf(System.currentTimeMillis());
+
+        try {
+            // 3. 创建可写模式的养号容器
+            int port = request.getPort() != null ? request.getPort() : 0;
+            ContainerPodV3 pod = poolManager.createFarmingPod(request.getProfileName(), port);
+
+            // 4. 标记养号会话（不参与常规空闲回收，防止用户操作期间被误清理）
+            pod.putMetadata("farmingSession", true);
+            pod.putMetadata("farmingTaskId", taskId);
+
+            // 5. 绑定SSE
+            emitterManager.bindTask(taskId, request.getClientId());
+
+            // 6. 系统自动拉起浏览器进入百度（不依赖AI中台）
+            boolean baiduOpened = poolManager.openBaiduInContainer(pod);
+
+            // 7. 返回容器信息
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("taskId", taskId);
+            result.put("containerId", pod.getContainerId());
+            result.put("vncPort", pod.getVncPort());
+            result.put("profile", pod.getProfileName());
+            result.put("baiduOpened", baiduOpened);
+            result.put("message", baiduOpened
+                    ? "养号环境已就绪，浏览器已自动打开百度。请通过VNC进行登录/养号操作，完成后点击保存配置。"
+                    : "养号环境已就绪，但自动打开百度失败，请手动在浏览器中访问百度首页。");
+
+            return ResultData.success("养号环境创建成功", result);
+
+        } catch (IllegalStateException e) {
+            log.error("[HrV3] 创建养号会话失败（池耗尽）：{}", e.getMessage());
+            return ResultData.error(503, "服务不可用：" + e.getMessage());
+        } catch (Exception e) {
+            log.error("[HrV3] 创建养号会话失败：{}", e.getMessage(), e);
+            return ResultData.error("创建养号环境失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 保存养号配置：保存浏览器配置到服务器并断开VNC，落盘数据库后配置列表可见。
+     *
+     * <p>执行顺序：</p>
+     * <ol>
+     *   <li>浏览器配置在可写挂载模式下已实时落盘到服务器本地</li>
+     *   <li>落盘数据库 auth_info 表：仅登记配置存在，<b>不标记任何已登录网址</b>
+     *       （已登录网址由用户调用 /farm/mark 标记时才会新增）</li>
+     *   <li>销毁容器（断开VNC连接，用户无法继续操作）</li>
+     * </ol>
+     *
+     * @param request 保存请求（profileName、containerId 必填）
+     * @return 保存结果
+     */
+    @PostMapping("/farm/save")
+    public ResultData<Map<String, Object>> saveFarmSession(@RequestBody FarmSaveRequest request) {
+        log.info("[HrV3] 保存养号配置：profileName={}, containerId={}", request.getProfileName(), request.getContainerId());
+
+        if (request.getProfileName() == null || request.getProfileName().isBlank()) {
+            return ResultData.error("profileName不能为空");
+        }
+        if (request.getContainerId() == null || request.getContainerId().isBlank()) {
+            return ResultData.error("containerId不能为空");
+        }
+
+        try {
+            // 1. 落盘数据库：登记配置存在，但百度仅作为默认平台占位（is_available=false，非已登录）
+            //    已登录网址必须由用户调用 /farm/mark 标记后才产生
+            authInfoService.updateAuthStatus(request.getProfileName(), BAIDU_HOME_URL, false);
+
+            // 2. 优雅关闭浏览器，等待登录态（Cookie/Login Data）完成落盘，避免强杀丢失
+            poolManager.gracefulStopChromium(request.getContainerId());
+
+            // 3. 销毁容器（断开VNC连接，防止用户继续操作产生脏数据）
+            poolManager.stopAndRemoveContainer(request.getContainerId());
+            log.info("[HrV3] 养号配置已保存，容器 {} 已销毁，配置名：{}", request.getContainerId(), request.getProfileName());
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("profileName", request.getProfileName());
+            result.put("websiteName", BAIDU_HOME_URL);
+            result.put("message", "浏览器配置已保存至服务器，VNC连接已断开。该配置尚未标记登录网址，请使用配置标记功能添加已登录网址。");
+
+            return ResultData.success("配置保存成功", result);
+
+        } catch (Exception e) {
+            log.error("[HrV3] 保存养号配置失败：{}", e.getMessage(), e);
+            return ResultData.error("保存配置失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 取消养号会话：直接销毁容器，不落盘数据库。
+     *
+     * <p>用户放弃本次养号时调用，配置不会出现在配置列表中。</p>
+     *
+     * @param request 取消请求（containerId 必填）
+     * @return 取消结果
+     */
+    @PostMapping("/farm/cancel")
+    public ResultData<Map<String, Object>> cancelFarmSession(@RequestBody FarmSaveRequest request) {
+        log.info("[HrV3] 取消养号会话：containerId={}", request.getContainerId());
+
+        if (request.getContainerId() == null || request.getContainerId().isBlank()) {
+            return ResultData.error("containerId不能为空");
+        }
+
+        try {
+            poolManager.stopAndRemoveContainer(request.getContainerId());
+            log.info("[HrV3] 养号会话已取消，容器 {} 已销毁（未落盘数据库）", request.getContainerId());
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("message", "养号会话已取消，容器已销毁，本次操作未保存。");
+
+            return ResultData.success("取消成功", result);
+
+        } catch (Exception e) {
+            log.error("[HrV3] 取消养号会话失败：{}", e.getMessage(), e);
+            return ResultData.error("取消养号会话失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 重新拉起浏览器：用户在 VNC 操作中误关浏览器后，调用此接口重新打开浏览器并进入百度。
+     *
+     * <p>复用创建会话时的自动拉起逻辑（打开 Chrome → 输入百度地址 → 回车），
+     * 不依赖 AI 中台；会话已保存/取消/超时回收时返回 404。</p>
+     *
+     * @param request 请求（containerId 必填）
+     * @return 拉起结果（baiduOpened、vncPort）
+     */
+    @PostMapping("/farm/open-browser")
+    public ResultData<Map<String, Object>> openBrowserInFarmSession(@RequestBody FarmBrowserRequest request) {
+        log.info("[HrV3] 重新拉起浏览器：containerId={}", request.getContainerId());
+
+        if (request.getContainerId() == null || request.getContainerId().isBlank()) {
+            return ResultData.error("containerId不能为空");
+        }
+
+        try {
+            // 1. 定位养号容器（已销毁/回收的会话查不到，提示重新创建）
+            ContainerPodV3 pod = poolManager.getPod(request.getContainerId()).orElse(null);
+            if (pod == null) {
+                return ResultData.error(404, "养号会话不存在或已结束，请重新创建养号环境");
+            }
+
+            // 2. 重新拉起浏览器并进入百度
+            boolean baiduOpened = poolManager.openBaiduInContainer(pod);
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("containerId", pod.getContainerId());
+            result.put("vncPort", pod.getVncPort());
+            result.put("baiduOpened", baiduOpened);
+            result.put("message", baiduOpened
+                    ? "浏览器已重新拉起并进入百度首页。"
+                    : "拉起浏览器失败，请稍后重试，或手动在容器内打开浏览器。");
+
+            return ResultData.success(baiduOpened ? "浏览器拉起成功" : "浏览器拉起失败", result);
+
+        } catch (Exception e) {
+            log.error("[HrV3] 重新拉起浏览器失败：{}", e.getMessage(), e);
+            return ResultData.error("拉起浏览器失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 配置标记接口：用户选定配置并输入网址，标记该配置已登录指定网址。
+     *
+     * <p>仅将状态落盘到数据库 auth_info 表，不涉及容器操作或文件系统变更。</p>
+     *
+     * @param request 标记请求（profileName、websiteUrl 必填）
+     * @return 标记结果
+     */
+    @PostMapping("/farm/mark")
+    public ResultData<Map<String, Object>> markFarmProfile(@RequestBody FarmMarkRequest request) {
+        log.info("[HrV3] 标记配置登录状态：profileName={}, websiteUrl={}", request.getProfileName(), request.getWebsiteUrl());
+
+        if (request.getProfileName() == null || request.getProfileName().isBlank()) {
+            return ResultData.error("profileName不能为空");
+        }
+        if (request.getWebsiteUrl() == null || request.getWebsiteUrl().isBlank()) {
+            return ResultData.error("websiteUrl不能为空");
+        }
+
+        try {
+            // 落盘数据库：按 (cloudStorageName, websiteName) 查/改/增，标记已登录
+            authInfoService.updateAuthStatus(request.getProfileName(), request.getWebsiteUrl(), true);
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("profileName", request.getProfileName());
+            result.put("websiteUrl", request.getWebsiteUrl());
+            result.put("message", "配置已标记为登录 " + request.getWebsiteUrl());
+
+            return ResultData.success("标记成功", result);
+
+        } catch (Exception e) {
+            log.error("[HrV3] 标记配置登录状态失败：{}", e.getMessage(), e);
+            return ResultData.error("标记失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取养号配置列表。
+     *
+     * <p>只有已执行保存操作（落盘数据库）的配置才会出现在列表中，
+     * 未保存的养号会话不会展示。</p>
+     *
+     * @return 按配置名分组的配置列表
+     */
+    @GetMapping("/farm/profiles")
+    public ResultData<List<Map<String, Object>>> getFarmProfiles() {
+        try {
+            List<AuthInfoEntity> flatList = authInfoService.getProfileList();
+
+            Map<String, List<AuthInfoEntity>> groupedProfiles = flatList.stream()
+                    .collect(Collectors.groupingBy(
+                            entity -> entity.getCloudStorageName() != null ? entity.getCloudStorageName() : "未命名配置"
+                    ));
+
+            List<Map<String, Object>> resultList = new ArrayList<>();
+
+            for (Map.Entry<String, List<AuthInfoEntity>> entry : groupedProfiles.entrySet()) {
+                String profileName = entry.getKey();
+                List<AuthInfoEntity> websites = entry.getValue();
+
+                long loggedInCount = websites.stream()
+                        .filter(w -> Boolean.TRUE.equals(w.getIsAvailable()))
+                        .count();
+
+                Map<String, Object> profileNode = new LinkedHashMap<>();
+                profileNode.put("profileName", profileName);
+                profileNode.put("summary", "已登录 " + loggedInCount + "/" + websites.size() + " 个平台");
+
+                List<Map<String, Object>> websiteNodes = websites.stream().map(w -> {
+                    Map<String, Object> webNode = new HashMap<>();
+                    webNode.put("id", w.getId());
+                    webNode.put("url", w.getWebsiteName());
+                    webNode.put("status", Boolean.TRUE.equals(w.getIsAvailable()) ? 1 : 0);
+                    return webNode;
+                }).collect(Collectors.toList());
+
+                profileNode.put("websites", websiteNodes);
+                resultList.add(profileNode);
+            }
+
+            return ResultData.success("获取成功", resultList);
+
+        } catch (Exception e) {
+            log.error("[HrV3] 获取养号配置列表失败：{}", e.getMessage(), e);
+            return ResultData.error("获取配置列表失败：" + e.getMessage());
+        }
+    }
+
     // ==================== 请求体定义 ====================
+
+    @Data
+    public static class FarmCreateRequest {
+        /**
+         * 配置名称（必填，同时作为宿主机浏览器配置目录名）
+         */
+        private String profileName;
+
+        /**
+         * 前端SSE连接的clientId（必填）
+         */
+        private String clientId;
+
+        /**
+         * 指定端口（可选）
+         */
+        private Integer port;
+    }
+
+    @Data
+    public static class FarmSaveRequest {
+        /**
+         * 配置名称（保存时必填）
+         */
+        private String profileName;
+
+        /**
+         * 容器ID（必填，用于销毁容器断开VNC）
+         */
+        private String containerId;
+    }
+
+    @Data
+    public static class FarmMarkRequest {
+        /**
+         * 配置名称（必填）
+         */
+        private String profileName;
+
+        /**
+         * 目标网址（必填，标记该配置已登录的网址）
+         */
+        private String websiteUrl;
+    }
+
+    @Data
+    public static class FarmBrowserRequest {
+        /**
+         * 容器ID（必填，create 返回的 containerId）
+         */
+        private String containerId;
+    }
 
     @Data
     public static class V3TaskCreateRequest {

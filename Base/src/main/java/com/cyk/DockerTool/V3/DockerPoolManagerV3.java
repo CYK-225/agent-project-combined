@@ -5,7 +5,10 @@ import com.cyk.DockerTool.V3.model.ContainerPodV3;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.command.ExecStartCmd;
 import com.github.dockerjava.api.model.*;
+import com.github.dockerjava.core.command.ExecStartResultCallback;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
@@ -39,6 +42,15 @@ public class DockerPoolManagerV3 {
     @Value("${agent.v3.pool.java-base-url}")
     String javaBaseUrl;
     private static final Logger log = LoggerFactory.getLogger(DockerPoolManagerV3.class);
+
+    /** 养号模式默认进入的网址（百度首页） */
+    private static final String FARMING_BAIDU_URL = "https://www.baidu.com";
+
+    /** 养号会话最长保留时间（秒），超过后即使未保存也会强制回收容器 */
+    private static final long FARMING_MAX_SESSION_SECONDS = 3600;
+
+    /** 销毁容器前等待 Chromium 优雅退出并完成登录态落盘的时间（毫秒） */
+    private static final long GRACEFUL_SHUTDOWN_WAIT_MS = 3000L;
 
     private final DockerClient dockerClient;
     private final AgentPoolPropertiesV3 properties;
@@ -101,10 +113,27 @@ public class DockerPoolManagerV3 {
         }
 
         log.info("[V3] 创建新容器Pod，配置文件：{}，只读模式", profileName);
-        return createNewPod(profileName, port);
+        return createNewPod(profileName, port, false);
     }
 
-    private ContainerPodV3 createNewPod(String profileName, int port) {
+    /**
+     * 为养号创建可写模式的容器Pod（一任务一容器，不复用）。
+     * <p>
+     * 与 {@link #createPod} 的区别：浏览器配置目录以 RW 方式挂载到容器实际使用的
+     * <code>/app/chrome_profile</code>，用户通过 VNC 的登录/养号操作实时落盘到宿主机。
+     * </p>
+     */
+    public ContainerPodV3 createFarmingPod(String profileName, int port) {
+        if (activePods.size() >= properties.getMaxPoolSize()) {
+            throw new IllegalStateException("[V3] 代理池已满且没有可用容器。" +
+                    "当前大小：" + activePods.size() + "，最大值：" + properties.getMaxPoolSize());
+        }
+
+        log.info("[V3] 创建养号容器Pod，配置文件：{}，可写模式", profileName);
+        return createNewPod(profileName, port, true);
+    }
+
+    private ContainerPodV3 createNewPod(String profileName, int port, boolean writable) {
         // 端口分配失败时自动重试，最多重试5次（仅自动分配端口时）
         int maxRetries = (port > 0) ? 1 : 5; // 用户指定端口不重试，自动分配最多重试5次
         Set<Integer> failedPorts = new HashSet<>(); // 记录本次失败的端口，重试时跳过
@@ -117,7 +146,7 @@ public class DockerPoolManagerV3 {
             String containerId = null;
             
             try {
-                containerId = createContainer(profileName, apiPort, vncPort, macAddress);
+                containerId = createContainer(profileName, apiPort, vncPort, macAddress, writable);
                 
                 dockerClient.startContainerCmd(containerId).exec();
                 
@@ -133,6 +162,13 @@ public class DockerPoolManagerV3 {
                         pod.getShortId(), actualApiPort, actualVncPort, apiPort, vncPort, profileName);
                 
                 waitForContainerReady(pod);
+                
+                // 只读模式：把宿主保存的浏览器配置（含登录态）复制为容器内可写副本，
+                // 供 Chromium 加载（Chromium 固定使用 --user-data-dir=/app/chrome_profile）。
+                // 副本随容器销毁而消失，不会污染宿主原始配置。
+                if (!writable) {
+                    copyBaseProfileToChromeProfile(containerId, profileName);
+                }
                 
                 pod.setStatus(ContainerPodV3.Status.READY);
                 log.info("[V3] 容器{}已就绪，配置文件：{}", pod.getShortId(), profileName);
@@ -218,7 +254,7 @@ public class DockerPoolManagerV3 {
         }
     }
 
-    private String createContainer(String profileName, int apiPort, int vncPort, String macAddress) {
+    private String createContainer(String profileName, int apiPort, int vncPort, String macAddress, boolean writable) {
         String basePath = properties.getProfileBasePath();
         String outputDirName = properties.getOutputDirName();
 
@@ -282,9 +318,16 @@ public class DockerPoolManagerV3 {
         binds.add(new Bind(hostOutputPath, new Volume("/app/anno"), AccessMode.rw));
         log.debug("[V3] 挂载输出目录：{} -> /app/anno (rw)", hostOutputPath);
 
-        // V3全部为只读模式，浏览器配置以只读方式挂载
-        binds.add(new Bind(hostUserBasePath, new Volume("/app/base_profile/" + profileName), AccessMode.ro));
-        log.debug("[V3] 挂载浏览器配置（只读）：{} -> /app/base_profile (ro)", hostUserBasePath);
+        if (writable) {
+            // 【可写模式 / 养号】：直接挂载为 RW 到容器内 Chromium 实际使用的 user-data-dir
+            // （容器侧 utils.py 启动 Chrome 时固定使用 --user-data-dir=/app/chrome_profile）
+            binds.add(new Bind(hostUserBasePath, new Volume("/app/chrome_profile"), AccessMode.rw));
+            log.debug("[V3] 挂载浏览器配置（可写/养号）：{} -> /app/chrome_profile (rw)", hostUserBasePath);
+        } else {
+            // 【只读模式 / 搜索任务】：浏览器配置以只读方式挂载，容器内使用临时配置
+            binds.add(new Bind(hostUserBasePath, new Volume("/app/base_profile/" + profileName), AccessMode.ro));
+            log.debug("[V3] 挂载浏览器配置（只读）：{} -> /app/base_profile (ro)", hostUserBasePath);
+        }
 
         Ports portBindings = new Ports();
         portBindings.bind(ExposedPort.tcp(apiPort), Ports.Binding.bindIpAndPort("0.0.0.0", apiPort));
@@ -482,6 +525,113 @@ public class DockerPoolManagerV3 {
         }
     }
 
+    /**
+     * 养号会话：自动拉起浏览器并进入百度首页（不依赖 AI 中台）。
+     * <p>
+     * 通过容器侧的原始 GUI 动作接口依次执行：打开 Chrome → 输入百度地址 → 回车。
+     * 动作接口为异步执行（202 立即返回），因此各步骤之间需等待动作实际完成。
+     * </p>
+     *
+     * @param pod 养号容器 Pod
+     * @return 是否成功完成打开百度（任一动作失败返回 false，但容器仍可人工操作）
+     */
+    public boolean openBaiduInContainer(ContainerPodV3 pod) {
+        String baseUrl = javaBaseUrl + ":" + pod.getAssignedPort();
+        log.info("[V3] 养号容器 {} 自动打开百度首页", pod.getShortId());
+        try {
+            postGuiAction(baseUrl, "/gui/open_app", Map.of("app_name", "google-chrome"));
+            Thread.sleep(3000);
+
+            postGuiAction(baseUrl, "/gui/type", Map.of("text", FARMING_BAIDU_URL));
+            Thread.sleep(1000);
+
+            postGuiAction(baseUrl, "/gui/key", Map.of("keys", List.of("enter")));
+            Thread.sleep(2000);
+
+            log.info("[V3] 养号容器 {} 已进入百度首页", pod.getShortId());
+            return true;
+        } catch (Exception e) {
+            log.error("[V3] 养号容器 {} 自动打开百度失败：{}", pod.getShortId(), e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 向容器发送 GUI 动作请求（POST JSON）。
+     */
+    private void postGuiAction(String baseUrl, String path, Map<String, Object> body) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        restTemplate.postForEntity(baseUrl + path, new HttpEntity<>(body, headers), Map.class);
+    }
+
+    /**
+     * 只读模式下将宿主保存的浏览器配置（含登录态）复制为容器内可写副本。
+     *
+     * <p>背景：只读模式的配置以 ro 挂载到 /app/base_profile/{profileName}，
+     * 而容器内 Chromium 固定使用 --user-data-dir=/app/chrome_profile（容器可写层）。
+     * 若不复制，Chromium 会以全新空配置启动，已保存的登录态无法加载。
+     * 复制到容器可写层后：任务对浏览器的改动只落在副本上，容器销毁即消失，
+     * 不会污染宿主保存的原始配置。</p>
+     *
+     * <p>复制后清理 Singleton 残留锁文件与 Crashpad（entrypoint 的清理在容器
+     * 启动时执行，早于本复制，需在此补偿）。</p>
+     *
+     * @param containerId 容器ID
+     * @param profileName 配置名（仅允许字母数字下划线连字符，防止命令注入）
+     */
+    private void copyBaseProfileToChromeProfile(String containerId, String profileName) {
+        if (profileName == null || !profileName.matches("[a-zA-Z0-9_-]+")) {
+            log.warn("[V3] profileName不合法，跳过配置复制：{}", profileName);
+            return;
+        }
+        try {
+            ExecCreateCmdResponse exec = dockerClient.execCreateCmd(containerId)
+                    .withCmd("sh", "-c",
+                            "cp -a /app/base_profile/" + profileName + "/. /app/chrome_profile/ 2>/dev/null; "
+                                    + "rm -rf /app/chrome_profile/Singleton* /app/chrome_profile/Crashpad")
+                    .withAttachStdout(false)
+                    .withAttachStderr(false)
+                    .exec();
+            ExecStartCmd startCmd = dockerClient.execStartCmd(exec.getId());
+            ExecStartResultCallback callback = new ExecStartResultCallback();
+            startCmd.exec(callback);
+            // 等待复制完成（默认10秒），保证 Chromium 启动前数据就绪；超时不阻断容器创建
+            callback.awaitCompletion(10, TimeUnit.SECONDS);
+            log.info("[V3] 已复制浏览器配置 {} 到容器 {} 的可写副本（只读模式）",
+                    profileName, containerId.substring(0, 12));
+        } catch (Exception e) {
+            log.warn("[V3] 复制浏览器配置失败（容器仍可用，但登录态可能未加载）：{}", e.getMessage());
+        }
+    }
+
+    /**
+     * 优雅关闭容器内的 Chromium，让登录态数据完成落盘后再销毁容器。
+     *
+     * <p>背景：容器销毁链路（entrypoint.sh cleanup）会执行 pkill -9 chrome 强杀浏览器，
+     * 而 Chromium 的登录态（Cookie/Login Data）是异步写盘的，强杀会导致用户刚登录
+     * 的数据来不及 flush 而丢失。此处先向容器发送 SIGTERM（Chromium 主进程收到后会
+     * 走正常退出流程并 flush 数据），等待数秒后再进入销毁流程。</p>
+     *
+     * @param containerId 容器ID
+     */
+    public void gracefulStopChromium(String containerId) {
+        try {
+            ExecCreateCmdResponse exec = dockerClient.execCreateCmd(containerId)
+                    .withCmd("pkill", "-TERM", "chrome")
+                    .withAttachStdout(false)
+                    .withAttachStderr(false)
+                    .exec();
+            ExecStartCmd startCmd = dockerClient.execStartCmd(exec.getId());
+            startCmd.withDetach(true).exec(new ExecStartResultCallback());
+            log.info("[V3] 已向容器 {} 发送 SIGTERM，等待 {}ms 让 Chromium 完成登录态落盘",
+                    containerId.substring(0, 12), GRACEFUL_SHUTDOWN_WAIT_MS);
+            Thread.sleep(GRACEFUL_SHUTDOWN_WAIT_MS);
+        } catch (Exception e) {
+            log.warn("[V3] 优雅关闭 Chromium 失败（不影响后续销毁）：{}", e.getMessage());
+        }
+    }
+
     public void stopAndRemoveContainer(String containerId) {
         log.info("[V3] 触发容器停止");
         ContainerPodV3 pod = activePods.remove(containerId);
@@ -532,6 +682,17 @@ public class DockerPoolManagerV3 {
         List<String> toRemove = new ArrayList<>();
 
         for (ContainerPodV3 pod : activePods.values()) {
+            // 养号中的容器：不参与常规空闲回收，防止用户操作期间被误清理；
+            // 但超过最大会话时长（如用户忘记保存/取消）时强制回收，避免永久泄漏
+            if (Boolean.TRUE.equals(pod.getMetadata("farmingSession"))) {
+                if (pod.getUptimeSeconds() > FARMING_MAX_SESSION_SECONDS) {
+                    log.info("[V3] 养号容器{}超过最大会话时长（{}秒），强制回收",
+                            pod.getShortId(), FARMING_MAX_SESSION_SECONDS);
+                    toRemove.add(pod.getContainerId());
+                }
+                continue;
+            }
+
             if (pod.isAvailable() && pod.getIdleSeconds() > idleTimeout) {
                 log.info("[V3] 容器{}超过空闲超时（{}秒），标记为清理",
                         pod.getShortId(), pod.getIdleSeconds());
@@ -813,7 +974,7 @@ public class DockerPoolManagerV3 {
         private String apiKey;
         private String baseUrl;
         private String model;
-        private boolean isUpdateProfile; // 保留字段兼容，实际不再使用，V3全部只读
+        private boolean isUpdateProfile; // 保留字段兼容，实际不再使用；可写挂载仅由新建配置/更新配置接口（createFarmingPod）使用
         private int maxSteps;
         private int currentStep;
         private boolean aborted = false;

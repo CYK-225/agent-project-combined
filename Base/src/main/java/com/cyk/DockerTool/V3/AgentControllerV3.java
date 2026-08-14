@@ -161,8 +161,12 @@ public class AgentControllerV3 {
     }
 
     /**
-     * 拉起人工登录/养号环境
-     * @deprecated V3已改为全部只读模式，不再支持养号，保留接口供前端兼容
+     * 拉起人工登录/养号环境（更新配置）
+     * <p>
+     * 挂载（可写模式）仅限新建配置和更新配置的接口使用；
+     * 本接口为更新配置场景：浏览器配置以可写方式挂载，用户 VNC 中的操作实时落盘到宿主机。
+     * 新建配置场景请使用 HR 模块的 /api/hr/v3/farm/create。
+     * </p>
      */
     @PostMapping("/task/updateProfile")
     public ResponseEntity<Map<String, Object>> submitUpdateProfileTask(@RequestBody TaskRequest request) {
@@ -178,7 +182,10 @@ public class AgentControllerV3 {
         int port = request.getPort();
 
         try {
-            ContainerPodV3 pod = poolManager.createPod(profileName, port);
+            // 更新配置场景：以可写模式挂载浏览器配置目录（对齐新建配置接口）
+            ContainerPodV3 pod = poolManager.createFarmingPod(profileName, port);
+            // 标记养号会话，不参与常规空闲回收，防止用户操作期间被误清理
+            pod.putMetadata("farmingSession", true);
 
             String instruction = String.format(
                     "请打开应用 'google-chrome'。然后在地址栏输入 '%s' 并回车访问。页面加载出来后，请立即执行 'terminate' 动作结束任务，千万不要尝试自己去点击登录！将控制权交给人类。",
